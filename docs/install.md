@@ -38,7 +38,7 @@ npm installs the engine and its one dependency and makes the `motlab` command. `
 
 The command only works if npm's global folder is on PATH. `npm prefix -g` prints that folder (on Windows the command goes in it, elsewhere in its `bin`). With the Node installer from nodejs.org or Homebrew it is on PATH already. With nvm for Windows it may not be; then use the clone below, whose installer writes its own launcher.
 
-This was tested on Windows 11 with a packed tarball installed into a separate npm folder: `setup`, `update`, `uninstall` and a render of the example. It has not been tried on macOS or Linux, or from the npm registry itself.
+This was tested on Windows 11, from the registry and from a packed tarball, each installed into a separate npm folder: `setup`, `update`, `uninstall` and a render of the example. It has not been tried on macOS or Linux, or as the global folder of nvm for Windows.
 
 ## With the installer
 
