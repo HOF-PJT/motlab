@@ -4,9 +4,11 @@ import { createReadStream, createWriteStream, existsSync, mkdirSync, mkdtempSync
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { pipeline } from 'node:stream/promises';
+import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { attachPage, findChrome, launchChrome } from './chrome.js';
 import { frameCount, splitFrames } from './codecs.js';
+import { hasMediabunny } from './doctor.js';
 import { finalize, probeVideo } from './ffmpeg.js';
 import { label, rate, selectEncoder } from './probe.js';
 import { startServer } from './server.js';
@@ -127,7 +129,9 @@ export async function renderVideo(o) {
     try { res = await attempt(want === 'raw' ? 'raw' : 'mediabunny'); }
     catch (e) {
       if (want !== 'auto' || o.signal?.aborted) throw e;
-      log(`\nMediabunny path failed (${e.message.split('\n')[0]}). Retrying with raw bitstream and ffmpeg.`);
+      // Without the npm package the page only says it "failed to fetch" mediabunny.mjs, so the cause is named here.
+      const why = hasMediabunny() ? e.message.split('\n')[0] : `mediabunny is not installed: run npm ci in ${fileURLToPath(new URL('..', import.meta.url))}`;
+      log(`\nMediabunny path failed (${why}). Retrying with raw bitstream and ffmpeg.`);
       res = await attempt('raw');
     }
     if (process.stdout.isTTY) process.stdout.write('\r');

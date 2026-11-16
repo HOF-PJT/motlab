@@ -49,20 +49,19 @@ npm install -g @motlab/cli
 npx @motlab/cli setup
 ```
 
-npm installs the engine. Setup copies both skills to `~/.claude/skills/`, checks the machine, and makes sure the `motlab` command works: where npm's folder is not on PATH (nvm for Windows), it adds the command to `~/.local/bin`. After that it is `motlab` everywhere, and `motlab doctor` checks the machine again at any time.
+npm installs the engine. Setup copies both skills to your agent's skill folder, checks the machine, and makes sure the `motlab` command works: where npm's folder is not on PATH (nvm for Windows), it adds the command to `~/.local/bin`. After that it is `motlab` everywhere, and `motlab doctor` checks the machine again at any time.
 
-<details><summary>Skills for other agents, and the other options</summary>
+Setup installs the skills for Claude Code unless you name another agent:
 
-<br>
+| Your agent | Setup command |
+|---|---|
+| Claude Code | `npx @motlab/cli setup` |
+| Codex, Cursor, OpenCode, GitHub Copilot, Gemini CLI, Amp, Windsurf | `npx @motlab/cli setup --skill agents` |
+| Antigravity (App and CLI) | `npx @motlab/cli setup --skill antigravity` |
+| Several of them | `npx @motlab/cli setup --skill claude,agents,antigravity` |
+| Any other agent | `npx @motlab/cli setup --skill-dir <its skill folder>` |
 
-- `--skill agents` for Codex, Cursor, OpenCode, Copilot, Gemini CLI, Amp and Windsurf
-- `--skill antigravity` for the Antigravity App and CLI
-- several at once with commas: `--skill claude,agents,antigravity`
-- `--skill-dir <dir>` for any other agent's skill folder
-- `--link` to link the skills instead of copying them
-- `--dry-run` to see every step first
-
-</details>
+Running it again for another agent adds the skills there too. `--dry-run` shows every step first, and `--link` links the skills instead of copying them. Start a new agent session afterwards so it loads them.
 
 <details><summary>From a clone instead, to work on motlab</summary>
 

@@ -69,16 +69,21 @@ export function createMixer() {
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);   // one triangle over the frame
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
+  // A lost context makes every WebGL call fail and the info logs come back null ("transition fade: null"). It happened
+  // once on a GPU-less CI runner, where Chrome draws with SwiftShader; render again.
+  const lost = () => { if (gl.isContextLost()) throw new Error("scene transitions lost their WebGL context (Chrome's GPU process restarted); render again"); };
+
   function program(name) {
     if (programs.has(name)) return programs.get(name);
+    lost();
     const t = findTransition(name), p = gl.createProgram();
     for (const [type, src] of [[gl.VERTEX_SHADER, VERT], [gl.FRAGMENT_SHADER, frag(t.glsl)]]) {
       const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(`transition ${t.name}: ${gl.getShaderInfoLog(s)}`);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { lost(); throw new Error(`transition ${t.name}: ${gl.getShaderInfoLog(s)}`); }
       gl.attachShader(p, s);
     }
     gl.bindAttribLocation(p, 0, 'p'); gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`transition ${t.name}: ${gl.getProgramInfoLog(p)}`);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { lost(); throw new Error(`transition ${t.name}: ${gl.getProgramInfoLog(p)}`); }
     const entry = { p, t, u: n => gl.getUniformLocation(p, n) };
     programs.set(name, entry); return entry;
   }

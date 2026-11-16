@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { findChrome } from './chrome.js';
 
 // Found the way the server finds it: npm may put it inside the engine folder (a clone, a global install) or next to it.
-const hasMediabunny = () => { try { createRequire(import.meta.url).resolve('mediabunny'); return true; } catch { return false; } };
+export const hasMediabunny = () => { try { createRequire(import.meta.url).resolve('mediabunny'); return true; } catch { return false; } };
 
 const run = (cmd, args) => {
   const r = spawnSync(cmd, args, { encoding: 'utf8', shell: false });
