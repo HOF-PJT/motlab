@@ -12,9 +12,23 @@ ffprobe -version
 
 Node must be 24 or newer. If Node is missing or older, tell the user and give them the command from the table in [install.md](install.md#requirements) for their OS. Do the same for Chrome and ffmpeg. Do not continue until Node 24 is there; Chrome and ffmpeg can be fixed after the install, because `motlab doctor` reports them again.
 
-## 2. Get the repository
+## 2. npm or a clone
 
-If the user has no clone yet, ask where it should live (a folder they keep, not a temporary one, because the `motlab` command runs from it):
+Ask which they want. npm is simpler for using motlab; a clone is for working on it, or for a machine where `npm prefix -g` is not on PATH (it can be missing with nvm for Windows).
+
+With npm, pick the skill target as in step 3, then:
+
+```bash
+npm install -g @staryone/motlab
+motlab setup --skill <target> --dry-run
+motlab setup --skill <target>
+```
+
+`motlab setup` takes the same skill options as the installer and runs `motlab doctor` at the end. If `motlab` is not found after the npm install, show the user `npm prefix -g` and ask before changing their PATH. To update later, `motlab update` prints the two commands (`npm install -g @staryone/motlab@latest`, then `motlab setup --update`). Then skip to step 4.
+
+## Get the repository
+
+For a clone: if the user has none yet, ask where it should live (a folder they keep, not a temporary one, because the `motlab` command runs from it):
 
 ```bash
 git clone https://github.com/staryone/motlab.git <folder>
@@ -42,7 +56,7 @@ motlab doctor
 motlab --help
 ```
 
-`doctor` must end with `Ready.` (warnings about Python are fine if the user does not need the skill's scripts). `motlab --help` prints the engine folder; it must be the clone from step 2. If it is another folder, an older launcher comes first on PATH; tell the user which one.
+`doctor` must end with `Ready.` (warnings about Python are fine if the user does not need the skill's scripts). `motlab --help` prints the engine folder; it must be the clone from step 2, or the folder in npm's global `node_modules` for an npm install. If it is another folder, an older launcher comes first on PATH; tell the user which one.
 
 Python packages for the skill's scripts, if the user wants them:
 
@@ -52,10 +66,10 @@ python -m pip install -r <folder>/skills/motlab/requirements.txt
 
 ## 5. Tell the user
 
-Say in a few lines what was installed and where (the clone, the launcher, the two skill folders), what `doctor` still reports, and how to start: `motlab edit <folder>/example` opens the example in the viewer (it starts the viewer in the background) and prints the address, `http://127.0.0.1:4173/p/example/`; `motlab stop` ends it. A new agent session may be needed before the skills show up.
+Say in a few lines what was installed and where (the clone and the launcher, or the npm package, and the two skill folders), what `doctor` still reports, and how to start: `motlab edit <folder>/example` opens the example in the viewer (it starts the viewer in the background) and prints the address, `http://127.0.0.1:4173/p/example/`; `motlab stop` ends it. A new agent session may be needed before the skills show up.
 
 ## Do not
 
-- create video projects inside the clone or the installed skill folder; a project lives in its own folder
+- create video projects inside the clone, the npm package or the installed skill folder; a project lives in its own folder
 - delete or overwrite a folder you did not create
 - render a user's project unless they ask for it; the user exports from the viewer

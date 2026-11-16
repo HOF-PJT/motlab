@@ -1,6 +1,6 @@
 # Installing motlab
 
-motlab has two parts: the engine (the `motlab` command, the viewer and the renderer) and two agent skills: `skills/motlab/` makes videos, and `skills/motlab-assets/` makes reusable asset kits for them. The installer sets up both parts. If an agent is doing the install for you, point it at [install-for-agents.md](install-for-agents.md).
+motlab has two parts: the engine (the `motlab` command, the viewer and the renderer) and two agent skills: `skills/motlab/` makes videos, and `skills/motlab-assets/` makes reusable asset kits for them. There are two ways to install both: from npm, or from a clone with the installer. Take npm to use motlab, and the clone to work on it. If an agent is doing the install for you, point it at [install-for-agents.md](install-for-agents.md).
 
 ## Requirements
 
@@ -26,6 +26,19 @@ The skill's scripts need numpy, scipy and Pillow:
 ```bash
 python -m pip install -r skills/motlab/requirements.txt
 ```
+
+## From npm
+
+```bash
+npm install -g @staryone/motlab
+motlab setup
+```
+
+npm installs the engine and its one dependency and makes the `motlab` command. `motlab setup` copies both skills to an agent skill folder (Claude Code by default) and runs `motlab doctor`. It takes the skill options of the installer below: `--skill`, `--skill-dir`, `--link`, `--update`, `--force` and `--dry-run`, so `motlab setup --skill claude,agents` puts the skills in two places. The engine folder is inside npm's global folder; `motlab --help` prints it, and the example project is in it.
+
+The command only works if npm's global folder is on PATH. `npm prefix -g` prints that folder (on Windows the command goes in it, elsewhere in its `bin`). With the Node installer from nodejs.org or Homebrew it is on PATH already. With nvm for Windows it may not be; then use the clone below, whose installer writes its own launcher.
+
+This was tested on Windows 11 with a packed tarball installed into a separate npm folder: `setup`, `update`, `uninstall` and a render of the example. It has not been tried on macOS or Linux, or from the npm registry itself.
 
 ## With the installer
 
@@ -55,6 +68,7 @@ Options:
 | `--bin <dir>` | put the launcher somewhere else |
 | `--update` | the skills again in every folder from `~/.motlab/install.json`, and in any folder from the table below that already has the motlab skill (an install from before that file). `--skill` and `--skill-dir` add folders. `motlab update` runs this |
 | `--force` | replace a folder at a skill path that has no `SKILL.md` |
+| `--skills-only` | the skills and `motlab doctor` only: no `npm ci` and no launcher. `motlab setup` runs this |
 | `--dry-run` | print every step and change nothing |
 
 Skill targets. Each one is the agent's user skill folder, as its docs gave it in November 2026:
@@ -83,7 +97,7 @@ node bin/motlab.js doctor
 
 Then either run `node /path/to/motlab/bin/motlab.js` directly, or make a launcher yourself. On Windows, `motlab.cmd` containing `@node "C:\path\to\motlab\bin\motlab.js" %*` in a folder on PATH. On macOS and Linux, a `motlab` file containing `exec node "/path/to/motlab/bin/motlab.js" "$@"`, marked executable.
 
-`npm link` and `npm install -g .` also work where npm's global folder is on PATH. They do not with nvm for Windows in its default setup, which is why the installer writes its own launcher.
+`npm link` and `npm install -g .` also work where npm's global folder is on PATH, as `npm install -g @staryone/motlab` does. They may not with nvm for Windows, which is why the installer writes its own launcher.
 
 To install the skills by hand, copy or link `skills/motlab/` and `skills/motlab-assets/` to your agent's skill folder (see the table above), side by side. Both call `motlab` and find the engine folder through `motlab --help`; `motlab-assets` also uses scripts from the motlab skill there.
 
@@ -93,7 +107,16 @@ To install the skills by hand, copy or link `skills/motlab/` and `skills/motlab-
 motlab update
 ```
 
-It works in the clone the `motlab` command runs from:
+From npm, `motlab update` asks npm for the newest version. If there is one, it prints the two commands that get it:
+
+```bash
+npm install -g @staryone/motlab@latest
+motlab setup --update
+```
+
+The second copies the skills again to every folder they went to before, since npm only replaces the engine.
+
+From a clone, it works in the clone the `motlab` command runs from:
 
 1. Stops if the clone has changes to tracked files, is not on a branch, or has commits that GitHub does not. It says what to do about each.
 2. Fetches the branch from `origin` and lists the new commits. With none it says so and stops.
@@ -118,7 +141,7 @@ With `--link`, the skills update with `git pull` alone, but run the installer an
 motlab uninstall
 ```
 
-It stops the viewer and removes the launcher (`~/.local/bin/motlab`, and `motlab.cmd` on Windows), the two skill folders in every agent folder they were installed in, `~/.motlab/` (where the installer put things, the viewer's recent projects and its log) and the encoder timings (`%LOCALAPPDATA%\motlab` on Windows, `~/.cache/motlab` elsewhere; with `MOTLAB_CACHE_DIR` only the timings file). It lists everything and asks first; `--yes` skips the question and `--dry-run` only lists. A skill installed with `--link` is removed as a link, and what it points to stays. It leaves the clone, because it runs from there: delete that folder afterwards.
+It stops the viewer and removes the launcher (`~/.local/bin/motlab`, and `motlab.cmd` on Windows), the two skill folders in every agent folder they were installed in, `~/.motlab/` (where the installer put things, the viewer's recent projects and its log) and the encoder timings (`%LOCALAPPDATA%\motlab` on Windows, `~/.cache/motlab` elsewhere; with `MOTLAB_CACHE_DIR` only the timings file). It lists everything and asks first; `--yes` skips the question and `--dry-run` only lists. A skill installed with `--link` is removed as a link, and what it points to stays. It leaves the clone, because it runs from there: delete that folder afterwards. From npm there is no launcher to remove, and `npm uninstall -g @staryone/motlab` removes the engine and the command afterwards.
 
 ## Check the machine
 
@@ -138,5 +161,5 @@ Windows
 
 macOS and Linux
 
-- The code has the macOS and Linux Chrome paths and uses ANGLE on Metal on macOS. On Linux, CI runs the tests and their end-to-end renders on an Ubuntu runner with Google Chrome and the distribution's ffmpeg; no real video and no install with `install.js` have been tried there, and macOS has not been tested at all. Reports are welcome.
+- The code has the macOS and Linux Chrome paths and uses ANGLE on Metal on macOS. On Linux, CI runs the tests and their end-to-end renders on an Ubuntu runner with Google Chrome and the distribution's ffmpeg; no real video and no install with `install.js` or npm have been tried there, and macOS has not been tested at all. Reports are welcome.
 - A machine without a GPU should still render through Chrome's software drawing and software H.264 encoder, only slower. On the Windows test laptop with Chrome drawing on SwiftShader, the benchmark scene took 2.8 times as long at 1080p and 4.5 times at 4K ([rendering](rendering.md#without-a-gpu)). A machine with no GPU at all has not been tested.

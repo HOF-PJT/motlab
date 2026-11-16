@@ -9,11 +9,12 @@ motlab stills <page.html> <outDir> <t1> <t2> ...  single frames as PNG or JPEG
 motlab video  <page.html> <out.mp4> [options]     one page as an MP4
 motlab events <page.html> <out.json>              the page's EVENTS, for syncing sound
 motlab doctor                                     check Node, Chrome, ffmpeg and the skill's Python packages
-motlab update [--dry-run]                         the newest motlab from GitHub, and the skills copied again where they were installed
-motlab uninstall [--dry-run] [--yes]              remove the command, the skills, ~/.motlab and the encoder cache
+motlab setup [--skill <target>] [--update] ...    copy the skills to agent folders, after npm install -g
+motlab update [--dry-run]                         the newest motlab (from GitHub, or the npm commands that get it), and the skills copied again where they were installed
+motlab uninstall [--dry-run] [--yes]              remove the skills, ~/.motlab, the encoder cache and a clone's command
 ```
 
-The viewer commands are described in [the viewer](viewer.md), `motlab update` in [Updating](install.md#updating) and `motlab uninstall` in [Removing](install.md#removing).
+The viewer commands are described in [the viewer](viewer.md), `motlab setup` in [From npm](install.md#from-npm), `motlab update` in [Updating](install.md#updating) and `motlab uninstall` in [Removing](install.md#removing).
 
 `<project>` is a folder with `project.json`, or a project file in it such as `video/project-tiktok.json` (a [version](projects.md#versions)). `motlab --help` prints the same list and the engine folder.
 

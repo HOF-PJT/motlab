@@ -1,18 +1,31 @@
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // motlab update: the engine folder is a git clone. It fetches its branch from origin, fast-forwards to it, and runs the
 // new install.js with --update, which runs npm ci and copies the skills again to every folder they were installed in.
-const ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]$/, '');
+// An engine folder inside node_modules came from `npm install -g`; there it says which version is out and how to get it.
+export const ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]$/, '');
+export const FROM_NPM = /[\\/]node_modules[\\/]/.test(ROOT);
+export const PKG = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 const git = (...args) => {
   const r = spawnSync('git', args, { cwd: ROOT, encoding: 'utf8' });
   if (r.error) throw new Error('git was not found. Install git, or update by hand as in docs/install.md#updating');
   return { ok: r.status === 0, out: (r.stdout || '').trimEnd(), err: (r.stderr || '').trim() };
 };
 
+function updateFromNpm() {
+  const r = spawnSync(`npm view ${PKG.name} version`, { encoding: 'utf8', shell: true });   // one string: npm is npm.cmd on Windows
+  const latest = r.status === 0 ? r.stdout.trim() : null;
+  if (latest === PKG.version) { console.log(`motlab is up to date (${PKG.version}).`); return 0; }
+  console.log(latest ? `motlab ${latest} is out; this is ${PKG.version}.` : `Could not ask npm for the newest version (this is ${PKG.version}).`);
+  console.log(`Update it with npm, then copy the skills again:\n  npm install -g ${PKG.name}@latest\n  motlab setup --update\nThen run motlab restart if the viewer is running.`);
+  return 1;
+}
+
 export function update({ dryRun = false } = {}) {
+  if (FROM_NPM) return updateFromNpm();
   if (!existsSync(join(ROOT, '.git'))) throw new Error(`${ROOT} is not a git clone, so it cannot update itself. Clone motlab again (docs/install.md) and run node install.js there`);
   const branch = git('rev-parse', '--abbrev-ref', 'HEAD').out;
   if (branch === 'HEAD') throw new Error(`${ROOT} is not on a branch. Check out main, then run motlab update again`);

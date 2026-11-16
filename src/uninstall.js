@@ -1,16 +1,18 @@
 // motlab uninstall: removes what install.js put on this machine. It stops the viewer, then deletes the `motlab`
 // launchers, the two skill folders in every agent folder from ~/.motlab/install.json (or, without that record, in
 // the agent folders install.js knows), ~/.motlab and the encoder cache. It lists everything and asks first. The
-// clone is left, because this command runs from it.
+// clone is left, because this command runs from it, and so is an npm install, which npm uninstall -g removes.
 import { existsSync, lstatSync, readFileSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
-import { fileURLToPath } from 'node:url';
 import { cacheFile } from './probe.js';
+import { FROM_NPM, PKG, ROOT } from './update.js';
 import { stopViewer } from './viewer.js';
 
-const HOME = homedir(), STATE = join(HOME, '.motlab'), ROOT = fileURLToPath(new URL('..', import.meta.url)).replace(/[\\/]$/, '');
+const HOME = homedir(), STATE = join(HOME, '.motlab');
+// What is left afterwards: the clone, or the npm package (npm made the command, so npm removes it).
+const REST = FROM_NPM ? `run npm uninstall -g ${PKG.name}` : `delete ${ROOT}`;
 // The agent skill folders install.js writes to, for an install from before ~/.motlab/install.json existed.
 const KNOWN = ['.claude/skills', '.agents/skills', '.gemini/config/skills', '.config/opencode/skills', '.cursor/skills', '.copilot/skills'].map(d => join(HOME, d));
 
@@ -38,10 +40,10 @@ function targets() {
 
 export async function uninstall({ dryRun = false, yes = false } = {}) {
   const list = targets();
-  if (!list.length) { console.log('Nothing from motlab is installed here.'); return 0; }
+  if (!list.length) { console.log(`Nothing from motlab is installed here${FROM_NPM ? `. To remove the command, ${REST}` : ''}.`); return 0; }
   console.log('motlab uninstall removes:');
   for (const t of list) console.log(`  ${t.path}  (${t.what})`);
-  console.log(`It leaves the clone in ${ROOT}; delete that folder yourself afterwards.`);
+  console.log(FROM_NPM ? `It leaves the npm package; ${REST} afterwards.` : `It leaves the clone in ${ROOT}; delete that folder yourself afterwards.`);
   if (dryRun) return 0;
   if (!yes) {
     if (!process.stdin.isTTY) { console.log('Run it again with --yes to remove them.'); return 1; }
@@ -56,6 +58,6 @@ export async function uninstall({ dryRun = false, yes = false } = {}) {
     try { rmSync(t.path, t.link ? {} : { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }); console.log(`removed ${t.path}`); }
     catch (e) { console.log(`could not remove ${t.path}: ${e.message}`); }
   }
-  console.log(`\nDone. To remove the rest, delete ${ROOT}.`);
+  console.log(`\nDone. To remove the rest, ${REST}.`);
   return 0;
 }

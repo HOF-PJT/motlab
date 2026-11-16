@@ -8,7 +8,7 @@
 
 A video engine where every scene is code, and an agent skill that writes the scenes for you.
 
-<code>git clone https://github.com/staryone/motlab.git && cd motlab && node install.js</code>
+<code>npm install -g @staryone/motlab && motlab setup</code>
 
 [Demo](#watch-the-demo) · [Install](#install) · [Quick start](#quick-start) · [Speed](#speed) · [How it works](#how-it-works) · [Docs](#documentation) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
 
@@ -45,34 +45,46 @@ https://github.com/user-attachments/assets/522d1db2-a0bd-43bd-84b7-9f071f224854
 You need Node 24 or newer, Google Chrome or Chromium, and ffmpeg with ffprobe on PATH. Python 3 is optional and only used by the skills' helper scripts. Blender is optional too, for the asset skill's main 3D path.
 
 ```bash
-git clone https://github.com/staryone/motlab.git
-cd motlab
-node install.js
-motlab doctor
+npm install -g @staryone/motlab
+motlab setup
 ```
 
-The installer runs `npm ci`, puts a `motlab` command in `~/.local/bin`, copies both skills to `~/.claude/skills/`, and checks the machine. `motlab doctor` checks it again at any time.
+npm installs the engine and the `motlab` command. `motlab setup` copies both skills to `~/.claude/skills/` and checks the machine; `motlab doctor` checks it again at any time.
 
-<details><summary>Skills for other agents, and the other installer options</summary>
+<details><summary>Skills for other agents, and the other options</summary>
 
 <br>
 
 - `--skill agents` for Codex, Cursor, OpenCode, Copilot, Gemini CLI, Amp and Windsurf
 - `--skill antigravity` for the Antigravity App and CLI
 - several at once with commas: `--skill claude,agents,antigravity`
-- `--skill-dir <dir>` for any other agent's skill folder, or `--skill none` for no skills
+- `--skill-dir <dir>` for any other agent's skill folder
 - `--link` to link the skills instead of copying them
 - `--dry-run` to see every step first
 
 </details>
 
-Later, `motlab update` gets the newest version from GitHub and copies the skills again to every agent folder they were installed in, and `motlab uninstall` removes the command, the skills and motlab's own files again.
+<details><summary>From a clone instead, to work on motlab</summary>
+
+<br>
+
+```bash
+git clone https://github.com/staryone/motlab.git
+cd motlab
+node install.js
+```
+
+The installer runs `npm ci`, puts a `motlab` command in `~/.local/bin` and copies the skills. It takes the same options, plus `--skill none` for no skills. Use it too when npm's global folder is not on PATH, as can happen with nvm for Windows.
+
+</details>
+
+Later, `motlab update` tells you when a new version is out and how to get it (from a clone it pulls it from GitHub itself), and `motlab uninstall` removes the skills and motlab's own files again.
 
 [Install guide and per-OS notes](docs/install.md) · [Instructions for an agent doing the install](docs/install-for-agents.md)
 
 ## Quick start
 
-1. Run `motlab edit example`. It starts the viewer in the background, opens the sample project and prints its address, `http://127.0.0.1:4173/p/example/`. Space plays, the arrow keys on the timeline step one frame, Ctrl+scroll zooms the timeline, and a drag on the preview marks a box.
+1. Run `motlab edit example` in a folder that holds the sample project. In a clone that is the clone itself; after an npm install, copy `example/` out of the engine folder that `motlab --help` prints. It starts the viewer in the background, opens the sample project and prints its address, `http://127.0.0.1:4173/p/example/`. Space plays, the arrow keys on the timeline step one frame, Ctrl+scroll zooms the timeline, and a drag on the preview marks a box.
 2. To make your own video, put your references in a folder and ask your agent, for example:
 
    ```text
@@ -150,7 +162,7 @@ Footage is decoded inside the page with Mediabunny, so a scene can cut and trim 
 
 <br>
 
-> The installer copies it for Claude Code by default. `--skill agents` covers Codex, Cursor, OpenCode, GitHub Copilot, Gemini CLI, Amp and Windsurf, and `--skill antigravity` the Antigravity App and CLI. `--skill-dir` takes any other agent's skill folder.
+> `motlab setup` and the installer copy it for Claude Code by default. `--skill agents` covers Codex, Cursor, OpenCode, GitHub Copilot, Gemini CLI, Amp and Windsurf, and `--skill antigravity` the Antigravity App and CLI. `--skill-dir` takes any other agent's skill folder.
 
 </details>
 

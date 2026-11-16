@@ -27,13 +27,15 @@ your own work) and `motlab events` are fine. Render only if the user asks for it
 `motlab` is a command on PATH. Run `motlab --help` once at the start: it lists the commands and prints the engine
 folder (its README, the `example/` project and `src/page/footage.js`).
 
-If `motlab` is not found, ask the user where their motlab clone is (the folder with `install.js` and `bin/motlab.js`)
-and run `node install.js --skill none` there; it puts the command on PATH. If they have no clone, follow
-`docs/install-for-agents.md` from https://github.com/staryone/motlab. Until the command is on PATH, call
+If `motlab` is not found, ask the user how they installed it. From npm (`npm install -g @staryone/motlab`), npm's
+global folder (`npm prefix -g`) is probably not on PATH; show them that and ask before changing PATH. From a clone (the
+folder with `install.js` and `bin/motlab.js`), run `node install.js --skill none` there; it puts the command on PATH.
+If they have neither, follow `docs/install-for-agents.md` from https://github.com/staryone/motlab. Until the command is on PATH, call
 `node <engine>/bin/motlab.js`. Never hard-code the engine path anywhere else. If a render or still fails because Chrome
 or ffmpeg is missing, run `motlab doctor` and show the user what it reports. When the user asks to update motlab or
-its skills, run `motlab update`. If it stops because the engine folder has local changes or commits of its own, show
-the user its message and ask; never stash, reset or discard their changes. The new skills load in a new session.
+its skills, run `motlab update`. For an npm install it prints the two commands that update it; run them if the user
+agrees. If it stops because the engine folder has local changes or commits of its own, show the user its message and
+ask; never stash, reset or discard their changes. The new skills load in a new session.
 
 ## The workflow
 

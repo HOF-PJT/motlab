@@ -9,6 +9,8 @@
 //   node install.js --bin <dir>           where the `motlab` command goes (default ~/.local/bin)
 //   node install.js --dry-run             print what would happen and change nothing
 //   node install.js --update              the skills again where they went last time (what `motlab update` runs)
+//   node install.js --skills-only         only the skills: no npm ci and no launcher (what `motlab setup` runs after
+//                                         `npm install -g @staryone/motlab`, where npm made the command)
 //
 // Where the skills, the launcher and --link went is kept in ~/.motlab/install.json for --update. It never installs
 // Chrome, ffmpeg or Python; it says how to get them.
@@ -35,13 +37,14 @@ const SKILL_DIRS = {
 
 const { values: o } = parseArgs({ options: {
   skill: { type: 'string' }, 'skill-dir': { type: 'string', multiple: true }, link: { type: 'boolean' }, bin: { type: 'string' },
-  update: { type: 'boolean' }, 'dry-run': { type: 'boolean' }, force: { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
+  update: { type: 'boolean' }, 'skills-only': { type: 'boolean' }, 'dry-run': { type: 'boolean' }, force: { type: 'boolean' }, help: { type: 'boolean', short: 'h' },
 } });
-if (o.help) { console.log(`usage: node install.js [--skill ${Object.keys(SKILL_DIRS).join('|')}|none[,...]] [--skill-dir <dir>] [--link] [--bin <dir>] [--update] [--force] [--dry-run]`); process.exit(0); }
+if (o.help) { console.log(`usage: node install.js [--skill ${Object.keys(SKILL_DIRS).join('|')}|none[,...]] [--skill-dir <dir>] [--link] [--bin <dir>] [--update] [--skills-only] [--force] [--dry-run]`); process.exit(0); }
 // --update puts the skills where they went before: the folders in the record, and any agent folder above that already
 // has the motlab skill (an install from before there was a record). --skill and --skill-dir add to them.
 const RECORD = join(HOME, '.motlab', 'install.json');
-let last = {}; if (o.update) try { last = JSON.parse(readFileSync(RECORD, 'utf8')); } catch {}
+let prev = {}; try { prev = JSON.parse(readFileSync(RECORD, 'utf8')); } catch {}
+const last = o.update ? prev : {}, only = o['skills-only'];
 const found = o.update ? Object.values(SKILL_DIRS).filter(d => existsSync(join(d, 'motlab', 'SKILL.md'))) : [];
 const targets = (o.skill ?? (o.update ? 'none' : 'claude')).split(',').map(t => t.trim()).filter(t => t && t !== 'none');
 const bad = targets.filter(t => !SKILL_DIRS[t]);
@@ -53,23 +56,24 @@ const dry = o['dry-run'], say = s => console.log(dry ? `[dry run] ${s}` : s);
 
 if (Number(process.versions.node.split('.')[0]) < 24) { console.error(`motlab needs Node 24 or newer; this is ${process.version}.`); process.exit(1); }
 
-// 1. npm packages
-say(`npm ci in ${HERE}`);
-if (!dry) {
+// 1. npm packages (an npm install already has them)
+if (!only) say(`npm ci in ${HERE}`);
+if (!only && !dry) {
   const r = spawnSync('npm ci --no-audit --no-fund', { cwd: HERE, stdio: 'inherit', shell: true });   // one string: npm is npm.cmd on Windows
   if (r.status !== 0) { console.error('npm ci failed. Fix the error above and run the installer again.'); process.exit(1); }
 }
 
 // 2. the `motlab` command: small launchers that run this folder's bin/motlab.js
-const bin = resolve(o.bin || last.bin || join(HOME, '.local', 'bin')), entry = join(HERE, 'bin', 'motlab.js');
+// With --skills-only npm made the command, and the record keeps the launcher folder of a clone install, if there was one.
+const bin = only ? prev.bin : resolve(o.bin || last.bin || join(HOME, '.local', 'bin')), entry = join(HERE, 'bin', 'motlab.js');
 const launchers = WIN
   ? [['motlab.cmd', `@node "${entry}" %*\r\n`], ['motlab', `#!/bin/sh\nexec node "${entry.replaceAll('\\', '/')}" "$@"\n`]]   // cmd/PowerShell, Git Bash
   : [['motlab', `#!/bin/sh\nexec node "${entry}" "$@"\n`]];
-for (const [name, body] of launchers) {
+if (!only) for (const [name, body] of launchers) {
   say(`write ${join(bin, name)}`);
   if (!dry) { mkdirSync(bin, { recursive: true }); writeFileSync(join(bin, name), body); if (!WIN) chmodSync(join(bin, name), 0o755); }
 }
-const onPath = (process.env.PATH || '').split(delimiter).some(p => p && resolve(p).toLowerCase() === bin.toLowerCase());
+const onPath = only || (process.env.PATH || '').split(delimiter).some(p => p && resolve(p).toLowerCase() === bin.toLowerCase());
 if (!onPath) console.log(`\n${bin} is not on PATH yet. Add it, then open a new terminal:\n  ${WIN
   ? `[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path', 'User') + ';${bin}', 'User')   (PowerShell)`
   : `echo 'export PATH="${bin}:$PATH"' >> ~/.profile`}\n`);

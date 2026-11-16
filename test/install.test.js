@@ -49,3 +49,18 @@ test('motlab uninstall removes what the installer wrote and nothing else', () =>
     assert.ok(existsSync(join(home, 'bin', 'other.cmd')) && existsSync(join(home, '.claude', 'skills', 'someone-else')), 'other files stay');
   } finally { rmSync(home, { recursive: true, force: true }); }
 });
+
+// After `npm install -g`, npm has made the command, so `motlab setup` (install.js --skills-only) copies the skills
+// and writes no launcher and runs no npm ci. It keeps the launcher folder of an earlier clone install in the record.
+test('motlab setup copies the skills and nothing else', () => {
+  const home = mkdtempSync(join(tmpdir(), 'motlab-home-'));
+  try {
+    mkdirSync(join(home, '.motlab'));
+    writeFileSync(join(home, '.motlab', 'install.json'), JSON.stringify({ skillDirs: [], bin: join(home, 'bin') }));
+    const r = spawnSync(process.execPath, ['bin/motlab.js', 'setup', '--skill-dir', join(home, 'agent'), '--skill', 'none', '--dry-run'],
+      { encoding: 'utf8', env: { ...process.env, HOME: home, USERPROFILE: home } });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.ok(r.stdout.includes(`-> ${join(home, 'agent', 'motlab')}`) && r.stdout.includes(`-> ${join(home, 'agent', 'motlab-assets')}`), r.stdout);
+    assert.ok(!/npm ci|write .*motlab/.test(r.stdout), r.stdout);
+  } finally { rmSync(home, { recursive: true, force: true }); }
+});

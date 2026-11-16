@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { doctor } from './doctor.js';
@@ -21,10 +22,15 @@ const USAGE = `motlab: render a canvas page (canvas #c, renderAt(t), TOTAL, read
   motlab video  <page.html> <out.mp4> [--fps 24] [--scale 2] [--audio file] [--encoder auto|hw|sw] [--workers N]
   motlab events <page.html> <out.json>
   motlab doctor                                      check Node, Chrome, ffmpeg and the skill's Python packages
+  motlab setup  [--skill claude|agents|antigravity|...] [--skill-dir <dir>] [--link] [--update] [--dry-run]
+                                                     copy the skills to agent folders (after npm install -g; default
+                                                     Claude Code). --update copies them again where they went before
   motlab update [--dry-run]                          the newest motlab from GitHub, its npm packages, and the skills
-                                                     copied again to every agent folder they were installed in
-  motlab uninstall [--dry-run] [--yes]               remove the command, the skills, ~/.motlab and the encoder cache
-                                                     (it lists them and asks first; the clone folder is left)
+                                                     copied again to every agent folder they were installed in (for an
+                                                     npm install it says which version is out and how to get it)
+  motlab uninstall [--dry-run] [--yes]               remove the skills, ~/.motlab, the encoder cache and a clone's
+                                                     command (it lists them and asks first; the clone folder or the npm
+                                                     package is left)
 
   --fps       frames per second (default 24)
   --scale     passed to the page as ?scale=; 2 turns a 1920x1080 page into 4K (default 2 for video, 1 for stills)
@@ -54,6 +60,11 @@ const num = (name, v, { min = 0, int = false } = {}) => {
 };
 
 export async function main(argv) {
+  // setup hands its options to install.js, which has its own (--skill, --skill-dir, --link, --update, --dry-run).
+  if (argv[0] === 'setup') {
+    const install = fileURLToPath(new URL('../install.js', import.meta.url));
+    return spawnSync(process.execPath, [install, '--skills-only', ...argv.slice(1)], { stdio: 'inherit' }).status ?? 1;
+  }
   const { values: v, positionals } = parseArgs({ args: argv, allowPositionals: true, options: {
     fps: { type: 'string' }, scale: { type: 'string' }, audio: { type: 'string' }, encoder: { type: 'string' }, codec: { type: 'string' },
     workers: { type: 'string' }, bitrate: { type: 'string' }, qp: { type: 'string' }, mux: { type: 'string' }, root: { type: 'string' }, chrome: { type: 'string' },
@@ -74,7 +85,7 @@ export async function main(argv) {
     await renderProject({ dir: page, out, scale: num('scale', v.scale, { min: 0.01 }) });
     return 0;
   }
-  if (!['stills', 'video', 'events'].includes(mode)) throw new Error(`unknown mode "${mode}" (render, start, edit, stop, restart, stills, video, events, doctor, update or uninstall)`);
+  if (!['stills', 'video', 'events'].includes(mode)) throw new Error(`unknown mode "${mode}" (render, start, edit, stop, restart, stills, video, events, doctor, setup, update or uninstall)`);
   if (!page || !out) throw new Error(`${mode} needs a page and an output path`);
   const common = { page, root: v.root, chrome: v.chrome };
 
