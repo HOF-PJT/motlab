@@ -14,7 +14,7 @@ Node must be 24 or newer. If Node is missing or older, tell the user and give th
 
 ## 2. npm or a clone
 
-Ask which they want. npm is simpler for using motlab; a clone is for working on it, or for a machine where `npm prefix -g` is not on PATH (it can be missing with nvm for Windows).
+Ask which they want. npm is simpler for using motlab; a clone is for working on it, or for a machine where `npm prefix -g` is not on PATH (with nvm for Windows 2.0 it is not; `npm config set prefix "%APPDATA%\npm"` fixes it, but it moves every global package, so ask first).
 
 With npm, pick the skill target as in step 3, then:
 

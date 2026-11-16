@@ -74,7 +74,7 @@ cd motlab
 node install.js
 ```
 
-The installer runs `npm ci`, puts a `motlab` command in `~/.local/bin` and copies the skills. It takes the same options, plus `--skill none` for no skills. Use it too when npm's global folder is not on PATH, as can happen with nvm for Windows.
+The installer runs `npm ci`, puts a `motlab` command in `~/.local/bin` and copies the skills. It takes the same options, plus `--skill none` for no skills. Use it too when npm's global folder is not on PATH. With nvm for Windows 2.0 it is not, and `npm config set prefix "%APPDATA%\npm"` before the npm install fixes that instead ([details](docs/install.md#from-npm)).
 
 </details>
 

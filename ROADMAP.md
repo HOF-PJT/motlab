@@ -16,7 +16,7 @@ What is not built, what has not been tested, and ideas that came up while using 
 ## Not tested yet
 
 - The benchmark against Remotion and HyperFrames on macOS and Linux, with their own downloaded browsers, and on scenes heavy on text, images or footage. It was one scene on Windows, at 1080p and 4K.
-- The npm package on macOS and Linux. On Windows it was installed from the registry, and with nvm for Windows 2.0 its command is not on PATH (docs/install.md).
+- The npm package on macOS and Linux. On Windows it was installed from the registry, and with nvm for Windows 2.0 it needs npm's prefix moved to a folder on PATH (docs/install.md).
 - macOS, and Linux beyond the tests, including `motlab update` there. On Linux, CI renders the end-to-end tests on an Ubuntu runner; no real video has been made there. On macOS the Chrome paths and the Metal flag are in the code, but nothing has run.
 - Renders longer than 10 minutes, and a 10-minute render on a machine that is doing nothing else.
 - A machine without a GPU beyond the tests. CI runs the end-to-end tests on Linux and Windows runners without a GPU, and the benchmark ran with Chrome drawing on SwiftShader on the test laptop (1080p and 4K, in `docs/rendering.md`), but no real video has been rendered on such a machine, and no 3D (WebGL) scene.
