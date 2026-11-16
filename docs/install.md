@@ -17,9 +17,15 @@ How to get them:
 | | Windows | macOS | Debian or Ubuntu |
 |---|---|---|---|
 | Node 24 | `winget install OpenJS.NodeJS` | `brew install node` | [nodejs.org](https://nodejs.org) or nvm |
-| Chrome | `winget install Google.Chrome` | `brew install --cask google-chrome` | Google's `.deb`, or `sudo apt install chromium` |
+| Chrome | `winget install Google.Chrome` | `brew install --cask google-chrome` | Google's `.deb` on x64 (below); on Ubuntu, `apt install chromium` gives the snap, which can fail headless |
 | ffmpeg | `winget install Gyan.FFmpeg` | `brew install ffmpeg` | `sudo apt install ffmpeg` |
 | Python 3 | `winget install Python.Python.3.12` | `brew install python` | `sudo apt install python3 python3-pip` |
+
+Google Chrome on Debian or Ubuntu (x64), the command `motlab doctor` prints when Chrome is missing:
+
+```bash
+wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt install -y ./google-chrome-stable_current_amd64.deb
+```
 
 The skill's scripts need numpy, scipy and Pillow:
 

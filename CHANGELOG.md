@@ -12,6 +12,7 @@ Changes are listed by release, newest first. The sections dated before 0.1.0 rec
 
 ### Changed
 
+- When Chrome is missing on Linux, `motlab doctor` prints the commands that install Google's `.deb` on x64 Debian or Ubuntu, and says the Chromium snap can fail headless, instead of "install Google Chrome or Chromium from your distribution". On other processors it says to use the distribution's Chromium, not the snap. Checked by printing the hint with the platform set to Linux x64 and arm64 on the Windows laptop; the commands have not been run on Linux.
 - The README and the install docs run setup as `npx @motlab/cli setup`, which works before `motlab` is on PATH; npx runs the installed package and downloads nothing.
 
 To tell whether npm's folder is on the user's PATH, setup drops the folders a Node process sees in front of it that the terminal does not have: nvm's shim puts Node's own folder first, and npx adds its `node_modules\.bin` folders, node-gyp-bin and Node's folder again. Under nvm, Node's folder is npm's global folder, so without this the check always passed. `test/install.test.js` covers both cases on the CI runners.

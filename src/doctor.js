@@ -16,7 +16,11 @@ const firstLine = s => s && s.split('\n')[0].trim();
 const HINTS = {
   win32: { ffmpeg: 'winget install Gyan.FFmpeg', chrome: 'winget install Google.Chrome', python: 'winget install Python.Python.3.12' },
   darwin: { ffmpeg: 'brew install ffmpeg', chrome: 'brew install --cask google-chrome', python: 'brew install python' },
-  linux: { ffmpeg: 'sudo apt install ffmpeg', chrome: 'install Google Chrome or Chromium from your distribution', python: 'sudo apt install python3 python3-pip' },
+  // Google's x64 .deb puts google-chrome in /usr/bin. Ubuntu's apt chromium is a snap, which can fail headless.
+  linux: { ffmpeg: 'sudo apt install ffmpeg', python: 'sudo apt install python3 python3-pip',
+    chrome: process.arch === 'x64'
+      ? 'on Debian or Ubuntu, Google Chrome (the Chromium snap can fail headless):\n        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt install -y ./google-chrome-stable_current_amd64.deb'
+      : 'install Chromium from your distribution, not the snap (the Google Chrome .deb is for x64)' },
 };
 
 // Each check: { name, ok, detail, fix, optional }. Required checks decide the exit code.
@@ -26,7 +30,7 @@ export function checks() {
   out.push({ name: 'Node.js 24 or newer', ok: major >= 24, detail: process.version, fix: 'install Node 24 from https://nodejs.org or with nvm' });
 
   let chrome = null; try { chrome = findChrome(); } catch {}
-  out.push({ name: 'Google Chrome or Chromium', ok: !!chrome, detail: chrome || 'not found', fix: `${hint.chrome}, or set CHROME=/path/to/chrome` });
+  out.push({ name: 'Google Chrome or Chromium', ok: !!chrome, detail: chrome || 'not found', fix: `${hint.chrome}\n        or set CHROME=/path/to/chrome` });
 
   for (const tool of ['ffmpeg', 'ffprobe']) {
     const v = firstLine(run(tool, ['-version']));
