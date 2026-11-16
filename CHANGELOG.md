@@ -1,11 +1,14 @@
 # Changelog
 
-There are no releases yet. Changes are listed by date, newest first.
+Changes are listed by release, newest first. The sections dated before 0.1.0 record what was built on the way to the first release.
 
-## Unreleased
+## 0.1.0 (2026-11-16)
+
+The first release.
 
 ### Added
 
+- CI on GitHub Actions (`.github/workflows/ci.yml`): `motlab doctor` and `npm test`, the end-to-end renders among them, on `ubuntu-latest` and `windows-latest` with Node 24, the runner's Google Chrome and ffmpeg (8.0.1 from Ubuntu, 9.0.2 from Chocolatey). The runners have no GPU, so Chrome draws in software there. All 30 tests pass on both.
 - The viewer runs as a background server. `motlab start` starts it on 4173 (the next free port up to 4190 when something else has 4173) and returns, `motlab stop` ends it (asking it to exit, so a running export closes its Chrome), and `motlab restart` starts it again from the folder it ran in. `motlab edit <project>` now opens the project in the running viewer and ends, starting the viewer first when none runs, instead of staying in the terminal until Ctrl+C; `motlab start --foreground` is the old way. The server's output goes to `~/.motlab/viewer.log`. A stop request from another site's page gets a 403, like the viewer's other writes. Tried on Windows: start in 0.5 s, a second start says it is running, edit, restart from another folder (the menu kept the first folder), stop, edit with no viewer running, and a viewer on 4174 while another server held 4173.
 - `motlab uninstall` removes the launchers that run motlab, the two skill folders in every agent folder from `~/.motlab/install.json` (or the agent folders the installer knows), `~/.motlab` and the encoder timings, after listing them and asking. `--yes` skips the question, `--dry-run` only lists, and without a terminal it needs `--yes`. A linked skill is removed as a link. The clone is left. A test runs it in a made-up home folder; a junction made like `--link` does was also removed without touching its target.
 - `THIRD_PARTY_NOTICES.md`: the MIT licence of gl-transitions, whose shaders are copied into `src/page/transitions.js` (the MIT licence asks for its text to go with copies), and the licences of what motlab installs or loads from a CDN.
@@ -67,6 +70,8 @@ There are no releases yet. Changes are listed by date, newest first.
 
 ### Fixed
 
+- Renders made while Chrome draws in software (SwiftShader, or a machine without a GPU) had shifted colours: Chrome writes such frames as full range YUV, and every file was tagged limited range, so `#30E2A8` decoded as (41, 243, 179) instead of (48, 226, 168). The range now comes from the encoder's `decoderConfig`, and ffmpeg writes it into the container and the bitstream. On a GPU nothing changes. Found by the first CI runs, reproduced and checked on the test laptop with SwiftShader. motlab's SSIM in the benchmark without a GPU went from 0.980 to 0.982 and 0.983 at 1080p, and from 0.988 to 0.991 and 0.992 at 4K.
+- Scene transitions failed with "scene transitions need WebGL2" on a Linux machine without a GPU. Chrome now gets `--enable-unsafe-swiftshader`, so WebGL falls back to software there; with a GPU it changes nothing.
 - Two viewer tabs on one project lost notes. Each tab saved its whole list, so a note made in one tab was dropped when the other saved, and both gave their new note the same number, the second overwriting the first one's picture. A save now names the notes the tab deleted, the server keeps the rest (`mergeNotes` in `src/editor.js`, tested in `test/notes.test.js`) and moves a new note to the next free number when its number was taken, and the page takes in the file's notes after every save and on focus. Notes get an `id`; notes from before ids are matched by number. Tried with two tabs in a windowed Chrome: notes 1 and 2 from the two tabs, each listed in both after a focus change, and a delete in one tab that the other did not undo. A running viewer keeps the old code until it is started again.
 - A project whose scenes had different canvas sizes rendered without a word and made an MP4 that changed resolution partway through (1920x1080, then 1280x720, then 1920x1080 in the test). `motlab render` and Export now stop with an error that names the scene and both sizes. `test/render.test.js` checks it.
 - The render put mono audio files 3 dB lower than the viewer plays them. ffmpeg's up-mix to stereo lowers a mono channel by 3 dB on each side, while WebAudio copies it to both at full level. Mono files now go to both channels at full level in the render too. On the example project (all three files are mono) the viewer, recorded off its audio graph, and the render now differ by 0.02 dB instead of 3.0 dB. Renders of existing projects with mono files get 3 dB louder. `test/render.test.js` checks the level.

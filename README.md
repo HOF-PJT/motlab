@@ -12,6 +12,7 @@ A video engine where every scene is code, and an agent skill that writes the sce
 
 [Demo](#watch-the-demo) · [Install](#install) · [Quick start](#quick-start) · [Speed](#speed) · [How it works](#how-it-works) · [Docs](#documentation) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
 
+[![CI](https://github.com/staryone/motlab/actions/workflows/ci.yml/badge.svg)](https://github.com/staryone/motlab/actions/workflows/ci.yml)
 [![MIT license](https://img.shields.io/badge/license-MIT-f4c430?style=flat-square)](LICENSE)
 [![Node.js 24+](https://img.shields.io/badge/Node.js-24%2B-339933?style=flat-square&logo=nodedotjs&logoColor=white)](package.json)
 
@@ -165,7 +166,7 @@ Footage is decoded inside the page with Mediabunny, so a scene can cut and trim 
 
 <br>
 
-> The Chrome paths and the Metal flag are in the code, but no render has run there yet. Everything so far was built and measured on one Windows laptop.
+> Not tested properly yet. CI runs the tests, the end-to-end renders among them, on an Ubuntu runner, but no real video has been made on Linux, and nothing has run on macOS (the Chrome paths and the Metal flag are in the code). Everything else was built and measured on one Windows laptop.
 
 </details>
 

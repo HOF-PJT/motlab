@@ -138,5 +138,5 @@ Windows
 
 macOS and Linux
 
-- The code has the macOS and Linux Chrome paths and uses ANGLE on Metal on macOS, but neither system has been tested yet. Reports are welcome.
+- The code has the macOS and Linux Chrome paths and uses ANGLE on Metal on macOS. On Linux, CI runs the tests and their end-to-end renders on an Ubuntu runner with Google Chrome and the distribution's ffmpeg; no real video and no install with `install.js` have been tried there, and macOS has not been tested at all. Reports are welcome.
 - A machine without a GPU should still render through Chrome's software drawing and software H.264 encoder, only slower. On the Windows test laptop with Chrome drawing on SwiftShader, the benchmark scene took 2.8 times as long at 1080p and 4.5 times at 4K ([rendering](rendering.md#without-a-gpu)). A machine with no GPU at all has not been tested.

@@ -10,16 +10,15 @@ What is not built, what has not been tested, and ideas that came up while using 
 - The viewer on a VPS with a domain. That needs security in front of it, or access only through Tailscale, which is also worth considering. From there, work could be run remotely on the personal laptop (when it is on) or on the VPS (when there is one).
 - Custom GLSL transitions from a file in the project. A transition as a layer over the cut (a swish of shapes) already exists as the asset skill's `transition.js`, but each of the two scene pages has to draw its half by hand; `project.json` has no option for it.
 - A cut list that splits one recording over several scenes by section, with captions placed from a transcript. `cuts.js` has the time map (`toOut`), but each section page still picks its part of the list by hand.
-- Continuous integration. The end-to-end test needs Chrome, ffmpeg and ideally a GPU.
 - Moving or resizing a note's box after it is drawn. Today the note has to be deleted and drawn again.
 - Clearing done notes in one go. They fold under Done, but `selection.json` keeps every one until it is deleted by hand.
 
 ## Not tested yet
 
 - The benchmark against Remotion and HyperFrames on macOS and Linux, with their own downloaded browsers, and on scenes heavy on text, images or footage. It was one scene on Windows, at 1080p and 4K.
-- macOS and Linux, including `motlab update` there. The Chrome paths and the Metal flag are in the code, but no render has run there.
+- macOS, and Linux beyond the tests, including `motlab update` there. On Linux, CI renders the end-to-end tests on an Ubuntu runner; no real video has been made there. On macOS the Chrome paths and the Metal flag are in the code, but nothing has run.
 - Renders longer than 10 minutes, and a 10-minute render on a machine that is doing nothing else.
-- A machine without a GPU. The benchmark ran with Chrome drawing on SwiftShader on the test laptop (1080p and 4K, in `docs/rendering.md`), but not on a machine that has no GPU, such as a cloud server, and not with a 3D (WebGL) scene.
+- A machine without a GPU beyond the tests. CI runs the end-to-end tests on Linux and Windows runners without a GPU, and the benchmark ran with Chrome drawing on SwiftShader on the test laptop (1080p and 4K, in `docs/rendering.md`), but no real video has been rendered on such a machine, and no 3D (WebGL) scene.
 - Footage filmed on a phone (variable frame rate and HEVC were tested with files made by ffmpeg), and HEVC on a Chrome that cannot decode it.
 - Scene transitions between scenes of different sizes in the viewer, and in a normal Chrome window. The render refuses scenes of different sizes.
 - The cut voice from `cut_pauses.py` on a real person's take. The whole-take test used Windows text to speech.
