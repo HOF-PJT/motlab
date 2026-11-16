@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "editor-example",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["bin/motlab.js", "edit", "example"],
+      "port": 4173
+    }
+  ]
+}
