@@ -18,7 +18,8 @@ const git = (...args) => {
 function updateFromNpm() {
   const r = spawnSync(`npm view ${PKG.name} version`, { encoding: 'utf8', shell: true });   // one string: npm is npm.cmd on Windows
   const latest = r.status === 0 ? r.stdout.trim() : null;
-  if (latest === PKG.version) { console.log(`motlab is up to date (${PKG.version}).`); return 0; }
+  const newer = (a, b) => { const [x, y] = [a, b].map(v => v.split(/[.-]/).map(Number)); for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i]; return false; };
+  if (latest && !newer(latest, PKG.version)) { console.log(`motlab is up to date (${PKG.version}).`); return 0; }
   console.log(latest ? `motlab ${latest} is out; this is ${PKG.version}.` : `Could not ask npm for the newest version (this is ${PKG.version}).`);
   console.log(`Update it with npm, then copy the skills again:\n  npm install -g ${PKG.name}@latest\n  motlab setup --update\nThen run motlab restart if the viewer is running.`);
   return 1;
