@@ -40,8 +40,9 @@ async function checkVideo(name, opts, frames) {
 }
 
 test('video: default encoder, Mediabunny mux', async () => {
-  const s = await checkVideo('auto.mp4', {}, 30);
-  assert.match(s.mux, /^Mediabunny/);
+  const logs = [];   // the renderer says why it left Mediabunny for the raw path; the failure shows it
+  const s = await checkVideo('auto.mp4', { log: m => logs.push(m) }, 30);
+  assert.match(s.mux, /^Mediabunny/, logs.join('\n'));
 });
 test('video: software encoder', () => checkVideo('sw.mp4', { encoder: 'sw' }, 30));
 test('video: raw bitstream mux', async () => {
