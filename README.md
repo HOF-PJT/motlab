@@ -8,7 +8,7 @@
 
 A video engine where every scene is code, and an agent skill that writes the scenes for you.
 
-<code>npm install -g @motlab/cli && motlab setup</code>
+<code>npm install -g @motlab/cli && npx @motlab/cli setup</code>
 
 [Demo](#watch-the-demo) · [Install](#install) · [Quick start](#quick-start) · [Speed](#speed) · [How it works](#how-it-works) · [Docs](#documentation) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
 
@@ -46,10 +46,10 @@ You need Node 24 or newer, Google Chrome or Chromium, and ffmpeg with ffprobe on
 
 ```bash
 npm install -g @motlab/cli
-motlab setup
+npx @motlab/cli setup
 ```
 
-npm installs the engine and the `motlab` command. `motlab setup` copies both skills to `~/.claude/skills/` and checks the machine; `motlab doctor` checks it again at any time.
+npm installs the engine. Setup copies both skills to `~/.claude/skills/`, checks the machine, and makes sure the `motlab` command works: where npm's folder is not on PATH (nvm for Windows), it adds the command to `~/.local/bin`. After that it is `motlab` everywhere, and `motlab doctor` checks the machine again at any time.
 
 <details><summary>Skills for other agents, and the other options</summary>
 
@@ -74,7 +74,7 @@ cd motlab
 node install.js
 ```
 
-The installer runs `npm ci`, puts a `motlab` command in `~/.local/bin` and copies the skills. It takes the same options, plus `--skill none` for no skills. Use it too when npm's global folder is not on PATH. With nvm for Windows 2.0 it is not, and `npm config set prefix "%APPDATA%\npm"` before the npm install fixes that instead ([details](docs/install.md#from-npm)).
+The installer runs `npm ci`, puts a `motlab` command in `~/.local/bin` and copies the skills. It takes the same options, plus `--skill none` for no skills.
 
 </details>
 

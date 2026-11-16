@@ -9,8 +9,8 @@
 //   node install.js --bin <dir>           where the `motlab` command goes (default ~/.local/bin)
 //   node install.js --dry-run             print what would happen and change nothing
 //   node install.js --update              the skills again where they went last time (what `motlab update` runs)
-//   node install.js --skills-only         only the skills: no npm ci and no launcher (what `motlab setup` runs after
-//                                         `npm install -g @motlab/cli`, where npm made the command)
+//   node install.js --skills-only         the skills, no npm ci (what `motlab setup` runs after `npm install -g
+//                                         @motlab/cli`); a launcher only when npm's command folder is not on PATH
 //
 // Where the skills, the launcher and --link went is kept in ~/.motlab/install.json for --update. It never installs
 // Chrome, ffmpeg or Python; it says how to get them.
@@ -64,16 +64,33 @@ if (!only && !dry) {
 }
 
 // 2. the `motlab` command: small launchers that run this folder's bin/motlab.js
-// With --skills-only npm made the command, and the record keeps the launcher folder of a clone install, if there was one.
-const bin = only ? prev.bin : resolve(o.bin || last.bin || join(HOME, '.local', 'bin')), entry = join(HERE, 'bin', 'motlab.js');
+// With --skills-only from an npm install, npm made the command in its global folder: <prefix> on Windows, <prefix>/bin
+// elsewhere. nvm for Windows 2.0 keeps that folder off PATH (its .shim folder only has the shims nvm ships with), so
+// then the launchers are written as for a clone. From npx's cache there is no install to point a launcher at.
+// PATH here can start with folders the user's terminal does not have: nvm's shim puts Node's own folder first (under
+// nvm that is npm's global folder), and npx adds node_modules\.bin folders, node-gyp-bin and Node's folder again. That
+// leading run is dropped, so the check sees the user's terminal. Where a user put Node's folder first themselves, setup
+// writes a launcher it did not need, which runs the same package.
+const same = (a, b) => resolve(a).toLowerCase() === resolve(b).toLowerCase();
+let userPath = (process.env.PATH || '').split(delimiter).filter(Boolean), lead = 0;
+while (lead < userPath.length && (/node_modules[\\/]\.bin$|node-gyp-bin$/i.test(userPath[lead]) || same(userPath[lead], dirname(process.execPath)))) lead++;
+userPath = userPath.slice(lead);
+const onPathDir = dir => userPath.some(p => same(p, dir));
+const nm = HERE.lastIndexOf(`node_modules`), fromNpm = only && nm > 0;
+if (fromNpm && /[\\/]_npx[\\/]/.test(HERE)) { console.error('motlab is not installed. Install it first, then run setup again:\n  npm install -g @motlab/cli'); process.exit(1); }
+const npmBin = fromNpm ? (WIN ? HERE.slice(0, nm) : join(HERE.slice(0, nm), '..', 'bin')) : null;
+const needLaunchers = !only || (fromNpm && !onPathDir(npmBin));
+if (only && needLaunchers) console.log(`npm put the motlab command in ${resolve(npmBin)}, which is not on PATH, so motlab writes its own.`);
+const bin = needLaunchers ? resolve(o.bin || last.bin || prev.bin || join(HOME, '.local', 'bin')) : prev.bin, entry = join(HERE, 'bin', 'motlab.js');
 const launchers = WIN
   ? [['motlab.cmd', `@node "${entry}" %*\r\n`], ['motlab', `#!/bin/sh\nexec node "${entry.replaceAll('\\', '/')}" "$@"\n`]]   // cmd/PowerShell, Git Bash
   : [['motlab', `#!/bin/sh\nexec node "${entry}" "$@"\n`]];
-if (!only) for (const [name, body] of launchers) {
-  say(`write ${join(bin, name)}`);
+if (needLaunchers) for (const [name, body] of launchers) {
+  let old = ''; try { old = readFileSync(join(bin, name), 'utf8'); } catch {}
+  say(old && old !== body ? `replace ${join(bin, name)} (it ran ${(/"([^"]+motlab\.js)"/.exec(old) || [, 'something else'])[1]})` : `write ${join(bin, name)}`);
   if (!dry) { mkdirSync(bin, { recursive: true }); writeFileSync(join(bin, name), body); if (!WIN) chmodSync(join(bin, name), 0o755); }
 }
-const onPath = only || (process.env.PATH || '').split(delimiter).some(p => p && resolve(p).toLowerCase() === bin.toLowerCase());
+const onPath = !needLaunchers || onPathDir(bin);
 if (!onPath) console.log(`\n${bin} is not on PATH yet. Add it, then open a new terminal:\n  ${WIN
   ? `[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path', 'User') + ';${bin}', 'User')   (PowerShell)`
   : `echo 'export PATH="${bin}:$PATH"' >> ~/.profile`}\n`);

@@ -14,17 +14,17 @@ Node must be 24 or newer. If Node is missing or older, tell the user and give th
 
 ## 2. npm or a clone
 
-Ask which they want. npm is simpler for using motlab; a clone is for working on it, or for a machine where `npm prefix -g` is not on PATH (with nvm for Windows 2.0 it is not; `npm config set prefix "%APPDATA%\npm"` fixes it, but it moves every global package, so ask first).
+Ask which they want. npm is simpler for using motlab; a clone is for working on it.
 
 With npm, pick the skill target as in step 3, then:
 
 ```bash
 npm install -g @motlab/cli
-motlab setup --skill <target> --dry-run
-motlab setup --skill <target>
+npx @motlab/cli setup --skill <target> --dry-run
+npx @motlab/cli setup --skill <target>
 ```
 
-`motlab setup` takes the same skill options as the installer and runs `motlab doctor` at the end. If `motlab` is not found after the npm install, show the user `npm prefix -g` and ask before changing their PATH. To update later, `motlab update` prints the two commands (`npm install -g @motlab/cli@latest`, then `motlab setup --update`). Then skip to step 4.
+Setup takes the same skill options as the installer and runs `motlab doctor` at the end. When npm's command folder is not on PATH (nvm for Windows), it writes a `motlab` launcher to `~/.local/bin`; if it then prints that `~/.local/bin` is not on PATH, show the user the line and ask before changing their PATH. To update later, `motlab update` prints the two commands (`npm install -g @motlab/cli@latest`, then `motlab setup --update`). Then skip to step 4.
 
 ## Get the repository
 

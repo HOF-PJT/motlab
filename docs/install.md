@@ -31,12 +31,14 @@ python -m pip install -r skills/motlab/requirements.txt
 
 ```bash
 npm install -g @motlab/cli
-motlab setup
+npx @motlab/cli setup
 ```
 
-npm installs the engine and its one dependency and makes the `motlab` command. `motlab setup` copies both skills to an agent skill folder (Claude Code by default) and runs `motlab doctor`. It takes the skill options of the installer below: `--skill`, `--skill-dir`, `--link`, `--update`, `--force` and `--dry-run`, so `motlab setup --skill claude,agents` puts the skills in two places. The engine folder is inside npm's global folder; `motlab --help` prints it, and the example project is in it.
+npm installs the engine and its one dependency and makes the `motlab` command. Setup copies both skills to an agent skill folder (Claude Code by default) and runs `motlab doctor`. It takes the skill options of the installer below: `--skill`, `--skill-dir`, `--link`, `--update`, `--force` and `--dry-run`, so `npx @motlab/cli setup --skill claude,agents` puts the skills in two places. It is run through npx because `motlab` may not be on PATH yet; npx runs the installed package and downloads nothing. Once the command works, `motlab setup` is the same. The engine folder is inside npm's global folder; `motlab --help` prints it, and the example project is in it.
 
-The command only works if npm's global folder is on PATH. `npm prefix -g` prints that folder (on Windows the command goes in it, elsewhere in its `bin`). With the Node installer from nodejs.org or Homebrew it is on PATH already. With nvm for Windows 2.0 in its default shim mode it is not: npm puts the command in the Node version's own folder (`installs\v24.x`), and nvm's `.shim` folder only holds the shims nvm ships with (node, npm, npx, pnpm, corepack, codex), so `motlab` is not found. Point npm's global folder at one that is on PATH, once, before installing:
+The command only works if npm's global folder is on PATH. `npm prefix -g` prints that folder (on Windows the command goes in it, elsewhere in its `bin`). With the Node installer from nodejs.org or Homebrew it is on PATH already. With nvm for Windows 2.0 in its default shim mode it is not: npm puts the command in the Node version's own folder (`installs\v24.x`), and nvm's `.shim` folder only holds the shims nvm ships with (node, npm, npx, pnpm, corepack, codex), so `motlab` is not found. Setup sees this and writes its own `motlab` launcher to `~/.local/bin`, as the clone installer does (`--bin <dir>` puts it elsewhere), and prints the line that adds that folder to PATH if it is not there. The launcher runs the engine in npm's folder, so `npm install -g @motlab/cli@latest` updates it, and `motlab uninstall` removes it. An older launcher there, from a clone, is replaced, and setup says what it ran.
+
+Instead of the launcher, npm's global folder can point at one that is on PATH, once, before installing:
 
 ```bash
 npm config set prefix "%APPDATA%\npm"
@@ -44,7 +46,7 @@ npm config set prefix "%APPDATA%\npm"
 
 In PowerShell write `"$env:APPDATA\npm"`. `%APPDATA%\npm` is npm's usual global folder on Windows and is often on PATH from an earlier Node install; `where npm` lists it if so, otherwise add it to PATH. This changes where every global package goes, not only motlab, and the packages there are shared by all Node versions. `motlab update` keeps working, because its `npm install -g` follows the same setting. The clone below also works there, since its installer writes its own launcher.
 
-This was tested on Windows 11, from the registry and from a packed tarball, each installed into a separate npm folder: `setup`, `update`, `uninstall` and a render of the example. It was also installed globally with nvm for Windows 2.0: into the nvm folder the command was not found, and with the prefix in `%APPDATA%\npm` it was (`--help` and `update`). It has not been tried on macOS or Linux.
+This was tested on Windows 11, from the registry and from a packed tarball, each installed into a separate npm folder: `setup`, `update`, `uninstall` and a render of the example. It was also installed globally with nvm for Windows 2.0: `npx @motlab/cli` ran the installed package from the nvm folder, setup wrote the launcher when that folder was off PATH and none when it was on PATH, and with the prefix in `%APPDATA%\npm` the command was found without one. It has not been tried on macOS or Linux.
 
 ## With the installer
 
@@ -74,7 +76,7 @@ Options:
 | `--bin <dir>` | put the launcher somewhere else |
 | `--update` | the skills again in every folder from `~/.motlab/install.json`, and in any folder from the table below that already has the motlab skill (an install from before that file). `--skill` and `--skill-dir` add folders. `motlab update` runs this |
 | `--force` | replace a folder at a skill path that has no `SKILL.md` |
-| `--skills-only` | the skills and `motlab doctor` only: no `npm ci` and no launcher. `motlab setup` runs this |
+| `--skills-only` | the skills and `motlab doctor`, no `npm ci`, and a launcher only for an npm install whose command folder is not on PATH. `motlab setup` runs this |
 | `--dry-run` | print every step and change nothing |
 
 Skill targets. Each one is the agent's user skill folder, as its docs gave it in November 2026:

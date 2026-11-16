@@ -2,6 +2,22 @@
 
 Changes are listed by release, newest first. The sections dated before 0.1.0 record what was built on the way to the first release.
 
+## 0.2.1 (not released yet)
+
+### Fixed
+
+- `npm install -g @motlab/cli` gave no working `motlab` command under nvm for Windows 2.0, whose shim mode keeps npm's global folder off PATH, and the README's next step, `motlab setup`, failed there with "not recognized". Setup now notices when npm's command folder is not on PATH and writes the same `motlab` launcher to `~/.local/bin` that the clone installer writes, pointing at the engine in npm's folder, and prints the line that adds `~/.local/bin` to PATH when it is missing. `motlab uninstall` removes it, and an update with `npm install -g @motlab/cli@latest` keeps it working. Where npm's folder is on PATH nothing changes.
+- Setup run from npx's cache, with no global install, stops and says to install first instead of copying skills from a folder npx may clear.
+- `motlab doctor` reported mediabunny missing when npm put it next to the engine folder instead of inside it, as npx does. It now finds it the way the server does, through Node's module resolution.
+
+### Changed
+
+- The README and the install docs run setup as `npx @motlab/cli setup`, which works before `motlab` is on PATH; npx runs the installed package and downloads nothing.
+
+To tell whether npm's folder is on the user's PATH, setup drops the folders a Node process sees in front of it that the terminal does not have: nvm's shim puts Node's own folder first, and npx adds its `node_modules\.bin` folders, node-gyp-bin and Node's folder again. Under nvm, Node's folder is npm's global folder, so without this the check always passed. `test/install.test.js` covers both cases on the CI runners.
+
+Tried on Windows 11 with the packed tarball in separate npm folders and home folders: npm's folder off PATH (launcher written, `motlab --help` through it, uninstall removed it), on PATH (no launcher), from a copy laid out like npx's cache (stops, exit 1), and over a clone's launcher (dry run: replaced, naming what it ran). With nvm for Windows 2.0 and this laptop's own PATH, the README's two commands: `npm install -g` of the 0.2.1 tarball, then `npx @motlab/cli setup` from a test home wrote the launcher, `motlab --help` and `update` ran through it; with npm's folder added to PATH no launcher was written. `doctor` found mediabunny inside the engine folder and next to it, and failed with it gone. Not tried: macOS and Linux.
+
 ## 0.2.0 (2026-11-17)
 
 ### Added

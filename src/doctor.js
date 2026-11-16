@@ -1,8 +1,11 @@
 // `motlab doctor`: checks what the engine and the skill need on this machine and says how to get what is missing.
 // It never installs anything. The installer (install.js) runs the same checks.
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { findChrome } from './chrome.js';
+
+// Found the way the server finds it: npm may put it inside the engine folder (a clone, a global install) or next to it.
+const hasMediabunny = () => { try { createRequire(import.meta.url).resolve('mediabunny'); return true; } catch { return false; } };
 
 const run = (cmd, args) => {
   const r = spawnSync(cmd, args, { encoding: 'utf8', shell: false });
@@ -29,7 +32,7 @@ export function checks() {
     const v = firstLine(run(tool, ['-version']));
     out.push({ name: tool, ok: !!v, detail: v ? v.replace(/ Copyright.*/, '') : 'not on PATH', fix: hint.ffmpeg });
   }
-  out.push({ name: 'npm packages (mediabunny)', ok: existsSync(new URL('../node_modules/mediabunny/package.json', import.meta.url)), detail: '', fix: 'run npm ci in the engine folder' });
+  out.push({ name: 'npm packages (mediabunny)', ok: hasMediabunny(), detail: '', fix: 'run npm ci in the engine folder' });
 
   // Python is only for the skill's helper scripts (contact sheets, sound effects, mixing, fonts).
   const py = ['python3', 'python'].map(p => ({ p, v: firstLine(run(p, ['--version'])) })).find(x => x.v && /Python 3/.test(x.v));

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { test } from 'node:test';
 
 // `motlab update` runs `install.js --update`, which has to find every folder the skills went to: the ones in
@@ -63,4 +63,26 @@ test('motlab setup copies the skills and nothing else', () => {
     assert.ok(r.stdout.includes(`-> ${join(home, 'agent', 'motlab')}`) && r.stdout.includes(`-> ${join(home, 'agent', 'motlab-assets')}`), r.stdout);
     assert.ok(!/npm ci|write .*motlab/.test(r.stdout), r.stdout);
   } finally { rmSync(home, { recursive: true, force: true }); }
+});
+
+// After `npm install -g`, setup writes its own launcher only when npm's command folder is not on PATH (nvm for
+// Windows 2.0 keeps it off). The package is laid out as npm lays out a global install: <prefix>\node_modules\@motlab\cli
+// on Windows, <prefix>/lib/node_modules/@motlab/cli with the command in <prefix>/bin elsewhere.
+test('setup from an npm install adds the command only when npm put it off PATH', () => {
+  const root = mkdtempSync(join(tmpdir(), 'motlab-npm-'));
+  try {
+    const win = process.platform === 'win32';
+    const pkg = win ? join(root, 'prefix', 'node_modules', '@motlab', 'cli') : join(root, 'prefix', 'lib', 'node_modules', '@motlab', 'cli');
+    const npmBin = win ? join(root, 'prefix') : join(root, 'prefix', 'bin');
+    mkdirSync(pkg, { recursive: true });
+    cpSync('install.js', join(pkg, 'install.js'));
+    const run = path => spawnSync(process.execPath, [join(pkg, 'install.js'), '--skills-only', '--skill', 'none', '--dry-run'],
+      { encoding: 'utf8', env: { ...process.env, HOME: root, USERPROFILE: root, PATH: path } });
+    const off = run(process.env.PATH);
+    assert.equal(off.status, 0, off.stderr);
+    assert.ok(off.stdout.includes('which is not on PATH') && off.stdout.includes(`write ${join(root, '.local', 'bin', 'motlab')}`), off.stdout);
+    const on = run([process.env.PATH, npmBin].join(delimiter));
+    assert.equal(on.status, 0, on.stderr);
+    assert.ok(!/write|not on PATH/.test(on.stdout), on.stdout);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
