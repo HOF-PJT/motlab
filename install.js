@@ -17,9 +17,10 @@
 import { spawnSync } from 'node:child_process';
 import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, readFileSync, readlinkSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { delimiter, dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { onUserPath } from './src/userpath.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url)), WIN = process.platform === 'win32', HOME = homedir();
 // Each agent's user skill folder, from its docs (November 2026). ~/.agents/skills is the shared one: Codex reads only that,
@@ -67,15 +68,7 @@ if (!only && !dry) {
 // With --skills-only from an npm install, npm made the command in its global folder: <prefix> on Windows, <prefix>/bin
 // elsewhere. nvm for Windows 2.0 keeps that folder off PATH (its .shim folder only has the shims nvm ships with), so
 // then the launchers are written as for a clone. From npx's cache there is no install to point a launcher at.
-// PATH here can start with folders the user's terminal does not have: nvm's shim puts Node's own folder first (under
-// nvm that is npm's global folder), and npx adds node_modules\.bin folders, node-gyp-bin and Node's folder again. That
-// leading run is dropped, so the check sees the user's terminal. Where a user put Node's folder first themselves, setup
-// writes a launcher it did not need, which runs the same package.
-const same = (a, b) => resolve(a).toLowerCase() === resolve(b).toLowerCase();
-let userPath = (process.env.PATH || '').split(delimiter).filter(Boolean), lead = 0;
-while (lead < userPath.length && (/node_modules[\\/]\.bin$|node-gyp-bin$/i.test(userPath[lead]) || same(userPath[lead], dirname(process.execPath)))) lead++;
-userPath = userPath.slice(lead);
-const onPathDir = dir => userPath.some(p => same(p, dir));
+const onPathDir = dir => onUserPath(dir);   // the terminal's PATH, without what npx and nvm put in front (src/userpath.js)
 const nm = HERE.lastIndexOf(`node_modules`), fromNpm = only && nm > 0;
 if (fromNpm && /[\\/]_npx[\\/]/.test(HERE)) { console.error('motlab is not installed. Install it first, then run setup again:\n  npm install -g @motlab/cli'); process.exit(1); }
 const npmBin = fromNpm ? (WIN ? HERE.slice(0, nm) : join(HERE.slice(0, nm), '..', 'bin')) : null;

@@ -75,7 +75,7 @@ test('setup from an npm install adds the command only when npm put it off PATH',
     const pkg = win ? join(root, 'prefix', 'node_modules', '@motlab', 'cli') : join(root, 'prefix', 'lib', 'node_modules', '@motlab', 'cli');
     const npmBin = win ? join(root, 'prefix') : join(root, 'prefix', 'bin');
     mkdirSync(pkg, { recursive: true });
-    cpSync('install.js', join(pkg, 'install.js'));
+    cpSync('install.js', join(pkg, 'install.js')); mkdirSync(join(pkg, 'src')); cpSync('src/userpath.js', join(pkg, 'src', 'userpath.js'));
     const run = path => spawnSync(process.execPath, [join(pkg, 'install.js'), '--skills-only', '--skill', 'none', '--dry-run'],
       { encoding: 'utf8', env: { ...process.env, HOME: root, USERPROFILE: root, PATH: path } });
     const off = run(process.env.PATH);
@@ -85,4 +85,21 @@ test('setup from an npm install adds the command only when npm put it off PATH',
     assert.equal(on.status, 0, on.stderr);
     assert.ok(!/write|not on PATH/.test(on.stdout), on.stdout);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// Seen from inside setup, PATH starts with what npx and nvm put in front of the terminal's. Linux and macOS cases are
+// checked here on any machine; nvm for Windows 2.0 was also tried for real (CHANGELOG 0.2.1).
+test('the PATH check sees the terminal, not what npx and nvm put in front', async () => {
+  const { onUserPath } = await import('../src/userpath.js');
+  const bins = ['/home/u/ex/node_modules/.bin', '/node_modules/.bin', '/x/node-gyp-bin'], binsW = ['C:/ex/node_modules/.bin', 'C:/x/node-gyp-bin'];
+  const nvm = '/home/u/.nvm/versions/node/v24/bin', nvmW = 'C:/nvm/installs/v24', nodeW = 'C:/Program Files/nodejs';
+  const on = (dir, PATH, execDir, { win = false, npx = false } = {}) =>
+    onUserPath(dir, { win, env: { PATH: PATH.join(win ? ';' : ':'), ...(npx ? { npm_command: 'exec' } : {}) }, execPath: `${execDir}/node` });
+  assert.equal(on(nvm, [nvm, '/usr/bin'], nvm), true, 'Linux nvm, setup run directly');
+  assert.equal(on(nvm, [...bins, nvm, nvm, '/usr/bin'], nvm, { npx: true }), true, 'Linux nvm, through npx');
+  assert.equal(on('/usr/local/bin', [...bins, '/usr/local/bin', '/usr/bin', '/usr/local/bin'], '/usr/local/bin', { npx: true }), true, 'Linux system Node, through npx');
+  assert.equal(on('/opt/node/bin', [...bins, '/opt/node/bin', '/usr/bin'], '/opt/node/bin', { npx: true }), false, 'Linux, npm folder off PATH');
+  assert.equal(on(nvmW, [nvmW, ...binsW, nvmW, 'C:/Users/u/bin'], nvmW, { win: true, npx: true }), false, 'nvm for Windows, through npx');
+  assert.equal(on(nvmW, [nvmW, 'C:/Users/u/bin'], nvmW, { win: true }), false, 'nvm for Windows, run directly');
+  assert.equal(on(nodeW, [...binsW, nodeW, 'C:/Windows', nodeW], nodeW, { win: true, npx: true }), true, 'Node from nodejs.org on Windows, through npx');
 });
