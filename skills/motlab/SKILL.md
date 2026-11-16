@@ -27,7 +27,7 @@ your own work) and `motlab events` are fine. Render only if the user asks for it
 `motlab` is a command on PATH. Run `motlab --help` once at the start: it lists the commands and prints the engine
 folder (its README, the `example/` project and `src/page/footage.js`).
 
-If `motlab` is not found, ask the user how they installed it. From npm (`npm install -g @staryone/motlab`), npm's
+If `motlab` is not found, ask the user how they installed it. From npm (`npm install -g @motlab/cli`), npm's
 global folder (`npm prefix -g`) is probably not on PATH; show them that and ask before changing PATH. From a clone (the
 folder with `install.js` and `bin/motlab.js`), run `node install.js --skill none` there; it puts the command on PATH.
 If they have neither, follow `docs/install-for-agents.md` from https://github.com/staryone/motlab. Until the command is on PATH, call

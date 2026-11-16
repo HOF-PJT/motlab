@@ -6,12 +6,12 @@ Changes are listed by release, newest first. The sections dated before 0.1.0 rec
 
 ### Added
 
-- motlab is on npm as `@staryone/motlab`, since the name `motlab` was taken there by an unrelated package. `npm install -g @staryone/motlab` installs the engine and the command. The package holds the engine, the skills, the example project and the docs (90 files, 943 kB packed); `bench/`, `test/` and the README images stay in the repository.
+- motlab is on npm as `@motlab/cli`, in the npm organization `motlab`, since the name `motlab` alone was taken there by an unrelated package. The command is still `motlab`. `npm install -g @motlab/cli` installs the engine and the command. The package holds the engine, the skills, the example project and the docs (90 files, 943 kB packed); `bench/`, `test/` and the README images stay in the repository.
 - `motlab setup` copies the skills to agent folders after an npm install. It runs `install.js --skills-only`, so it takes the installer's skill options (`--skill`, `--skill-dir`, `--link`, `--update`, `--force`, `--dry-run`) and ends with `motlab doctor`.
 
 ### Changed
 
-- From an npm install, `motlab update` asks npm for the newest version and prints the commands that get it (`npm install -g @staryone/motlab@latest`, then `motlab setup --update`), and `motlab uninstall` says to finish with `npm uninstall -g @staryone/motlab`. A clone works as before.
+- From an npm install, `motlab update` asks npm for the newest version and prints the commands that get it (`npm install -g @motlab/cli@latest`, then `motlab setup --update`), and `motlab uninstall` says to finish with `npm uninstall -g @motlab/cli`. A clone works as before.
 - The README installs with npm first; the clone and `install.js` are under "From a clone instead".
 
 Tried on Windows 11: the packed tarball installed with `npm install -g --prefix` into a separate folder, with a separate home folder. `motlab setup --skill claude,agents`, `setup --update --dry-run`, `update`, `uninstall --yes`, and `motlab render` of a copy of the example at `--scale 0.5` (9 s, 3 scenes, in 11 s). Not tried: an install from the npm registry, macOS and Linux, and nvm for Windows as the global folder.

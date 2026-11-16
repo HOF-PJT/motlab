@@ -10,7 +10,7 @@
 //   node install.js --dry-run             print what would happen and change nothing
 //   node install.js --update              the skills again where they went last time (what `motlab update` runs)
 //   node install.js --skills-only         only the skills: no npm ci and no launcher (what `motlab setup` runs after
-//                                         `npm install -g @staryone/motlab`, where npm made the command)
+//                                         `npm install -g @motlab/cli`, where npm made the command)
 //
 // Where the skills, the launcher and --link went is kept in ~/.motlab/install.json for --update. It never installs
 // Chrome, ffmpeg or Python; it says how to get them.

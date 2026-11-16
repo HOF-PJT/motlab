@@ -30,7 +30,7 @@ python -m pip install -r skills/motlab/requirements.txt
 ## From npm
 
 ```bash
-npm install -g @staryone/motlab
+npm install -g @motlab/cli
 motlab setup
 ```
 
@@ -97,7 +97,7 @@ node bin/motlab.js doctor
 
 Then either run `node /path/to/motlab/bin/motlab.js` directly, or make a launcher yourself. On Windows, `motlab.cmd` containing `@node "C:\path\to\motlab\bin\motlab.js" %*` in a folder on PATH. On macOS and Linux, a `motlab` file containing `exec node "/path/to/motlab/bin/motlab.js" "$@"`, marked executable.
 
-`npm link` and `npm install -g .` also work where npm's global folder is on PATH, as `npm install -g @staryone/motlab` does. They may not with nvm for Windows, which is why the installer writes its own launcher.
+`npm link` and `npm install -g .` also work where npm's global folder is on PATH, as `npm install -g @motlab/cli` does. They may not with nvm for Windows, which is why the installer writes its own launcher.
 
 To install the skills by hand, copy or link `skills/motlab/` and `skills/motlab-assets/` to your agent's skill folder (see the table above), side by side. Both call `motlab` and find the engine folder through `motlab --help`; `motlab-assets` also uses scripts from the motlab skill there.
 
@@ -110,7 +110,7 @@ motlab update
 From npm, `motlab update` asks npm for the newest version. If there is one, it prints the two commands that get it:
 
 ```bash
-npm install -g @staryone/motlab@latest
+npm install -g @motlab/cli@latest
 motlab setup --update
 ```
 
@@ -141,7 +141,7 @@ With `--link`, the skills update with `git pull` alone, but run the installer an
 motlab uninstall
 ```
 
-It stops the viewer and removes the launcher (`~/.local/bin/motlab`, and `motlab.cmd` on Windows), the two skill folders in every agent folder they were installed in, `~/.motlab/` (where the installer put things, the viewer's recent projects and its log) and the encoder timings (`%LOCALAPPDATA%\motlab` on Windows, `~/.cache/motlab` elsewhere; with `MOTLAB_CACHE_DIR` only the timings file). It lists everything and asks first; `--yes` skips the question and `--dry-run` only lists. A skill installed with `--link` is removed as a link, and what it points to stays. It leaves the clone, because it runs from there: delete that folder afterwards. From npm there is no launcher to remove, and `npm uninstall -g @staryone/motlab` removes the engine and the command afterwards.
+It stops the viewer and removes the launcher (`~/.local/bin/motlab`, and `motlab.cmd` on Windows), the two skill folders in every agent folder they were installed in, `~/.motlab/` (where the installer put things, the viewer's recent projects and its log) and the encoder timings (`%LOCALAPPDATA%\motlab` on Windows, `~/.cache/motlab` elsewhere; with `MOTLAB_CACHE_DIR` only the timings file). It lists everything and asks first; `--yes` skips the question and `--dry-run` only lists. A skill installed with `--link` is removed as a link, and what it points to stays. It leaves the clone, because it runs from there: delete that folder afterwards. From npm there is no launcher to remove, and `npm uninstall -g @motlab/cli` removes the engine and the command afterwards.
 
 ## Check the machine
 

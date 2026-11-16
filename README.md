@@ -8,7 +8,7 @@
 
 A video engine where every scene is code, and an agent skill that writes the scenes for you.
 
-<code>npm install -g @staryone/motlab && motlab setup</code>
+<code>npm install -g @motlab/cli && motlab setup</code>
 
 [Demo](#watch-the-demo) · [Install](#install) · [Quick start](#quick-start) · [Speed](#speed) · [How it works](#how-it-works) · [Docs](#documentation) · [FAQ](#faq) · [Roadmap](ROADMAP.md)
 
@@ -45,7 +45,7 @@ https://github.com/user-attachments/assets/522d1db2-a0bd-43bd-84b7-9f071f224854
 You need Node 24 or newer, Google Chrome or Chromium, and ffmpeg with ffprobe on PATH. Python 3 is optional and only used by the skills' helper scripts. Blender is optional too, for the asset skill's main 3D path.
 
 ```bash
-npm install -g @staryone/motlab
+npm install -g @motlab/cli
 motlab setup
 ```
 

@@ -19,12 +19,12 @@ Ask which they want. npm is simpler for using motlab; a clone is for working on 
 With npm, pick the skill target as in step 3, then:
 
 ```bash
-npm install -g @staryone/motlab
+npm install -g @motlab/cli
 motlab setup --skill <target> --dry-run
 motlab setup --skill <target>
 ```
 
-`motlab setup` takes the same skill options as the installer and runs `motlab doctor` at the end. If `motlab` is not found after the npm install, show the user `npm prefix -g` and ask before changing their PATH. To update later, `motlab update` prints the two commands (`npm install -g @staryone/motlab@latest`, then `motlab setup --update`). Then skip to step 4.
+`motlab setup` takes the same skill options as the installer and runs `motlab doctor` at the end. If `motlab` is not found after the npm install, show the user `npm prefix -g` and ask before changing their PATH. To update later, `motlab update` prints the two commands (`npm install -g @motlab/cli@latest`, then `motlab setup --update`). Then skip to step 4.
 
 ## Get the repository
 
