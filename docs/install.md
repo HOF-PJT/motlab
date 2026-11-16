@@ -27,7 +27,7 @@ Google Chrome on Debian or Ubuntu (x64), the command `motlab doctor` prints when
 wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && sudo apt install -y ./google-chrome-stable_current_amd64.deb
 ```
 
-The skill's scripts need numpy, scipy and Pillow:
+The skill's scripts need numpy, scipy and Pillow. From the engine folder (`motlab --help` prints it; `motlab doctor` prints this command with the full path when they are missing):
 
 ```bash
 python -m pip install -r skills/motlab/requirements.txt

@@ -2,6 +2,7 @@
 // It never installs anything. The installer (install.js) runs the same checks.
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 import { findChrome } from './chrome.js';
 
 // Found the way the server finds it: npm may put it inside the engine folder (a clone, a global install) or next to it.
@@ -44,7 +45,7 @@ export function checks() {
   if (py) {
     const missing = ['numpy', 'scipy', 'PIL'].filter(m => run(py.p, ['-c', `import ${m}`]) === null);
     out.push({ name: 'Python packages (numpy, scipy, Pillow)', ok: !missing.length, optional: true, detail: missing.length ? `missing: ${missing.join(', ')}` : '',
-      fix: `${py.p} -m pip install -r skills/motlab/requirements.txt` });
+      fix: `${py.p} -m pip install -r "${fileURLToPath(new URL('../skills/motlab/requirements.txt', import.meta.url))}"` });   // the full path: an npm install is not the current folder
   }
   return out;
 }

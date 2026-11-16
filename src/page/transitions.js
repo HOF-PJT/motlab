@@ -57,56 +57,68 @@ void main() { gl_FragColor = transition(vUv); }`;
 // One WebGL canvas that mixes two canvases (or images, or video frames). draw() returns that canvas; copy it onto
 // the frame with drawImage right away.
 export function createMixer() {
-  const cv = document.createElement('canvas');
-  const gl = cv.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false });
-  if (!gl) throw new Error('scene transitions need WebGL2');
-  const programs = new Map(), textures = [gl.createTexture(), gl.createTexture()];
-  for (const t of textures) {
-    gl.bindTexture(gl.TEXTURE_2D, t);
-    for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
-  }
-  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);   // one triangle over the frame
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-
+  let cv, gl, programs, textures;
   // A lost context makes every WebGL call fail and the info logs come back null ("transition fade: null"). It happened
-  // once on a GPU-less CI runner, where Chrome draws with SwiftShader; render again.
-  const lost = () => { if (gl.isContextLost()) throw new Error("scene transitions lost their WebGL context (Chrome's GPU process restarted); render again"); };
+  // on the GPU-less Ubuntu CI runner, where Chrome draws with SwiftShader, at the first shader compile. draw() then
+  // builds a new canvas and context and tries the frame once more.
+  function init() {
+    cv = document.createElement('canvas');
+    gl = cv.getContext('webgl2', { premultipliedAlpha: false, preserveDrawingBuffer: true, antialias: false });
+    if (!gl) throw new Error('scene transitions need WebGL2');
+    programs = new Map(); textures = [gl.createTexture(), gl.createTexture()];
+    for (const t of textures) {
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);   // one triangle over the frame
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  }
+  init();
 
   function program(name) {
     if (programs.has(name)) return programs.get(name);
-    lost();
     const t = findTransition(name), p = gl.createProgram();
     for (const [type, src] of [[gl.VERTEX_SHADER, VERT], [gl.FRAGMENT_SHADER, frag(t.glsl)]]) {
       const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { lost(); throw new Error(`transition ${t.name}: ${gl.getShaderInfoLog(s)}`); }
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(`transition ${t.name}: ${gl.getShaderInfoLog(s)}`);
       gl.attachShader(p, s);
     }
     gl.bindAttribLocation(p, 0, 'p'); gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { lost(); throw new Error(`transition ${t.name}: ${gl.getProgramInfoLog(p)}`); }
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`transition ${t.name}: ${gl.getProgramInfoLog(p)}`);
     const entry = { p, t, u: n => gl.getUniformLocation(p, n) };
     programs.set(name, entry); return entry;
   }
 
+  function drawOnce(name, from, to, progress, params) {
+    const w = from.width, h = from.height;
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    const { p, t, u } = program(name);
+    gl.viewport(0, 0, w, h); gl.useProgram(p);
+    [from, to].forEach((img, i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, textures[i]); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); });
+    gl.uniform1i(u('uFrom'), 0); gl.uniform1i(u('uTo'), 1); gl.uniform1f(u('progress'), progress); gl.uniform1f(u('ratio'), w / h);
+    for (const [k, type] of Object.entries(t.types)) {
+      const v = params[k] ?? t.defaults[k], loc = u(k);
+      if (loc === null || v === undefined) continue;
+      if (type === 'float') gl.uniform1f(loc, v);
+      else if (type === 'bool' || type === 'int') gl.uniform1i(loc, Number(v));
+      else gl[`uniform${type.slice(3)}fv`](loc, v);   // vec2, vec3, vec4
+    }
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    return cv;
+  }
+
   return {
-    canvas: cv,
+    get canvas() { return cv; },
+    // A context lost mid-frame throws from a compile or draws nothing, so both are checked; a second loss is reported.
     draw(name, from, to, progress, params = {}) {
-      const w = from.width, h = from.height;
-      if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
-      const { p, t, u } = program(name);
-      gl.viewport(0, 0, w, h); gl.useProgram(p);
-      [from, to].forEach((img, i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, textures[i]); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); });
-      gl.uniform1i(u('uFrom'), 0); gl.uniform1i(u('uTo'), 1); gl.uniform1f(u('progress'), progress); gl.uniform1f(u('ratio'), w / h);
-      for (const [k, type] of Object.entries(t.types)) {
-        const v = params[k] ?? t.defaults[k], loc = u(k);
-        if (loc === null || v === undefined) continue;
-        if (type === 'float') gl.uniform1f(loc, v);
-        else if (type === 'bool' || type === 'int') gl.uniform1i(loc, Number(v));
-        else gl[`uniform${type.slice(3)}fv`](loc, v);   // vec2, vec3, vec4
+      for (let tries = 0; tries < 2; tries++) {
+        try { const out = drawOnce(name, from, to, progress, params); if (!gl.isContextLost()) return out; }
+        catch (e) { if (!gl.isContextLost()) throw e; }
+        if (tries === 0) init();
       }
-      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-      return cv;
+      throw new Error("scene transitions lost their WebGL context twice (Chrome's GPU process restarted); render again");
     },
   };
 }
