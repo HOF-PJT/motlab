@@ -30,7 +30,8 @@ async function checkVideo(name, opts, frames) {
   assert.equal(v.frames, frames); assert.equal(Number(v.nb_frames), frames);
   assert.ok(Math.abs(v.duration - frames / 30) < 1e-3, `duration ${v.duration}`);
   assert.deepEqual([v.width, v.height], [640, 360]);
-  assert.deepEqual([v.color_range, v.color_space, v.color_transfer, v.color_primaries], ['tv', 'bt709', 'bt709', 'bt709']);
+  // limited range when Chrome draws on a GPU, full range when it draws in software (CI runners have no GPU)
+  assert.deepEqual([v.color_range, v.color_space, v.color_transfer, v.color_primaries], [s.fullRange ? 'pc' : 'tv', 'bt709', 'bt709', 'bt709']);
   const left = meanRgb(out, '200:200:60:80'), right = meanRgb(out, '100:60:340:20');
   assert.ok(near(left, [0x30, 0xE2, 0xA8], 4), `left field decoded as ${left}`);
   assert.ok(near(right, [0xF5, 0xD0, 0x4E], 4), `right field decoded as ${right}`);

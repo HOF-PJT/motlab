@@ -5,10 +5,10 @@ How `motlab render`, `motlab video` and Export turn scene pages into an MP4, how
 ## Steps
 
 1. A small static server serves the project folder (the nearest folder above the page with a `project.json`, else the page's folder, or `--root`) on `127.0.0.1`.
-2. Chrome starts with `--headless=new --enable-gpu --force_high_performance_gpu`. The GPU actually in use is read from `WEBGL_debug_renderer_info` and printed at the start.
+2. Chrome starts with `--headless=new --enable-gpu --force_high_performance_gpu --enable-unsafe-swiftshader`. The GPU actually in use is read from `WEBGL_debug_renderer_info` and printed at the start.
 3. `src/page/runtime.js` is injected into the page. For each frame it calls `renderAt`, makes a `VideoFrame` from the canvas and feeds it to a `VideoEncoder`.
 4. Mediabunny muxes the encoded chunks into an MP4 inside the page, which is POSTed to Node. If that fails, the engine retries with a raw Annex B bitstream.
-5. ffmpeg copies the stream (`-c copy`) into the final file. This pass writes BT.709 limited range tags into the bitstream, joins the parts from parallel mode, adds audio and moves `moov` to the front. It always runs, even after a successful Mediabunny mux, because the encoders tag colour inconsistently (see quirks).
+5. ffmpeg copies the stream (`-c copy`) into the final file. This pass writes BT.709 tags with the encoder's range into the bitstream, joins the parts from parallel mode, adds audio and moves `moov` to the front. It always runs, even after a successful Mediabunny mux, because the encoders tag colour inconsistently (see quirks).
 6. ffprobe counts the frames and duration of the final file. The render fails if they do not match.
 
 Temporary files go to the system temp folder and are removed afterwards. The output is written as `.part` and renamed at the end.
@@ -119,14 +119,14 @@ To compare on the same GPU, motlab ran again on the Radeon (`IGPU=1 node run.mjs
 
 ### Without a GPU
 
-The same benchmark with Chrome drawing in software (`CPU=1 node run.mjs`, and `CPU=1 SCALE=2` for 4K), on the same laptop with nothing else running. All three use ANGLE on SwiftShader (`--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`): HyperFrames through `--no-browser-gpu`, Remotion through `--gl=swangle`, and motlab through [bench/motlab-cpu.mjs](../bench/motlab-cpu.mjs), which swaps motlab's GPU flags for these (motlab has no option for it). motlab encodes with `--encoder sw`; Remotion and HyperFrames encode with ffmpeg on the CPU by default. motlab's `GPU:` line named SwiftShader, and in one 1080p run each of motlab, Remotion's canvas and HyperFrames' canvas, the Windows GPU counters showed no GPU work from their Chrome. The GPUs were still in the laptop, so this is software drawing on a laptop CPU, not a measured machine without a GPU. SSIM is against the same stills as above, drawn on the GPU.
+The same benchmark with Chrome drawing in software (`CPU=1 node run.mjs`, and `CPU=1 SCALE=2` for 4K), on the same laptop with nothing else running. All three use ANGLE on SwiftShader (`--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader`): HyperFrames through `--no-browser-gpu`, Remotion through `--gl=swangle`, and motlab through [bench/motlab-cpu.mjs](../bench/motlab-cpu.mjs), which swaps motlab's GPU flags for these (motlab has no option for it). motlab encodes with `--encoder sw`; Remotion and HyperFrames encode with ffmpeg on the CPU by default. motlab's `GPU:` line named SwiftShader, and in one 1080p run each of motlab, Remotion's canvas and HyperFrames' canvas, the Windows GPU counters showed no GPU work from their Chrome. The GPUs were still in the laptop, so this is software drawing on a laptop CPU, not a measured machine without a GPU. SSIM is against the same stills as above, drawn on the GPU. motlab's SSIM was measured again after the colour range fix below (one run each); the times are from before it, and the fix changes only the tags ffmpeg writes.
 
 At 1080p:
 
 | Tool and setting | Time | fps overall | SSIM | File | With a GPU |
 |---|---|---|---|---|---|
-| motlab, `--encoder sw --workers 4` | 19.2 s | 15.6 | 0.980 | 30.0 MB | |
-| motlab, `--encoder sw` | 27.0 s | 11.1 | 0.980 | 29.9 MB | 9.5 s |
+| motlab, `--encoder sw --workers 4` | 19.2 s | 15.6 | 0.982 | 30.0 MB | |
+| motlab, `--encoder sw` | 27.0 s | 11.1 | 0.983 | 29.9 MB | 9.5 s |
 | HyperFrames, canvas, default | 28.3 s | 10.6 | 0.987 | 20.4 MB | 27.6 s |
 | HyperFrames, HTML, default (6 workers) | 29.4 s | 10.2 | 0.965 | 20.5 MB | 30.9 s |
 | HyperFrames, HTML, `--workers 1` | 30.5 s | 9.8 | 0.965 | 20.5 MB | 27.2 s |
@@ -140,9 +140,9 @@ At 4K:
 |---|---|---|---|---|---|
 | HyperFrames, canvas, default | 43.4 s | 6.9 | 0.985 | 36.5 MB | 50.9 s |
 | HyperFrames, HTML, default (6 workers) | 50.7 s | 5.9 | 0.972 | 49.0 MB | 54.3 s |
-| motlab, `--encoder sw --workers 4` | 60.7 s | 4.9 | 0.988 | 83.9 MB | |
+| motlab, `--encoder sw --workers 4` | 60.7 s | 4.9 | 0.991 | 83.9 MB | |
 | HyperFrames, HTML, `--workers 1` | 63.2 s | 4.8 | 0.972 | 49.0 MB | 71.8 s |
-| motlab, `--encoder sw` | 67.3 s | 4.5 | 0.988 | 84.5 MB | 14.8 s |
+| motlab, `--encoder sw` | 67.3 s | 4.5 | 0.992 | 84.5 MB | 14.8 s |
 | Remotion, canvas, default | 72.4 s | 4.1 | 0.977 | 35.7 MB | 48.9 s |
 | Remotion, HTML, `--concurrency=1` | 130.6 s | 2.3 | 0.964 | 42.9 MB | 53.8 s |
 | Remotion, HTML, default | 154.2 s | 1.9 | 0.964 | 42.9 MB | 61.1 s |
@@ -166,7 +166,9 @@ Not measured: macOS, where HyperFrames turns on a capture through `drawElementIm
 - The hardware encoder hangs after a mid-stream `flush()`: the next `encode()` never finishes. Flush only once, at the end.
 - Software H.264 ignores bitrate. Targets of 2, 22, 60 or 200 Mbit/s give nearly the same file. `quantizer` mode is not supported for software H.264. `contentHint: 'detail'` raises quality slightly but is slower.
 - Hardware H.264 and HEVC support `bitrateMode: 'quantizer'`. QP is passed per frame with `encode(frame, { avc: { quantizer } })`.
-- Colour tags in the bitstream are inconsistent: hardware H.264 writes none, hardware HEVC writes `colour_primaries=0`, and software H.264 writes an sRGB transfer. ffmpeg always overwrites the VUI with BT.709 limited range through `h264_metadata` or `hevc_metadata`.
+- Colour tags in the bitstream are inconsistent: hardware H.264 writes none, hardware HEVC writes `colour_primaries=0`, and software H.264 writes an sRGB transfer. ffmpeg always overwrites the VUI with BT.709 and the encoder's range through `h264_metadata` or `hevc_metadata`.
+- The range depends on how Chrome draws. On a GPU, a canvas frame becomes limited range YUV; when Chrome draws in software (SwiftShader, or a CI runner without a GPU) it becomes full range, with both the hardware and the software encoder. The encoder's `decoderConfig.colorSpace.fullRange` says which, and motlab tags the file from it. Before that, software-drawn renders were tagged limited and decoded with shifted colours: `#30E2A8` came back as (41, 243, 179) instead of (48, 226, 168). Found by the CI runs; reproduced on the test laptop with SwiftShader, where the fixed render decodes as (49, 226, 169).
+- WebGL needs `--enable-unsafe-swiftshader` to fall back to software where there is no usable GPU: without it a Linux CI runner has no WebGL2, so scene transitions fail. motlab always passes it; with a GPU it changes nothing.
 - The encoder config needs a sensible `framerate`. 240 is rejected.
 - `shadowBlur` on a 2D canvas is expensive: 160 shadow blurs cap every pipeline at about 32 fps at 1080p.
 - `willReadFrequently: true` makes the canvas CPU-backed and nearly halves WebCodecs speed. Do not use it on a render canvas.

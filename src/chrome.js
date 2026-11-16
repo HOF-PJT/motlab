@@ -19,7 +19,10 @@ export function findChrome(explicit) {
 }
 
 // --force_high_performance_gpu matters on dual-GPU laptops: without it headless Chrome draws on the integrated GPU.
-export const GPU_FLAGS = ['--enable-gpu', '--force_high_performance_gpu', ...(process.platform === 'darwin' ? ['--use-angle=metal'] : [])];
+// --enable-unsafe-swiftshader lets WebGL fall back to software on a machine without a usable GPU (a Linux CI runner
+// has no WebGL2 otherwise); with a GPU it changes nothing. It is "unsafe" for browsing untrusted sites, and motlab
+// only opens the user's own pages.
+export const GPU_FLAGS = ['--enable-gpu', '--force_high_performance_gpu', '--enable-unsafe-swiftshader', ...(process.platform === 'darwin' ? ['--use-angle=metal'] : [])];
 
 const live = new Set();
 process.on('exit', () => { for (const c of live) c.killSync(); });

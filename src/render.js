@@ -116,8 +116,10 @@ export async function renderVideo(o) {
         for (const p of inputs) await pipeline(createReadStream(p), w, { end: false });
         await new Promise(r => w.end(r)); inputs = [all];
       }
-      await finalize({ inputs, raw: mux === 'raw', codec: enc.codec, fps, audio: o.audio && resolve(o.audio), out: part, duration: frames / fps, tmp, signal: o.signal });
-      return { mux, encodeMs, stats };
+      const fullRange = stats[0].fullRange;
+      if (stats.some(s => s.fullRange !== fullRange)) throw new Error('the workers encoded different colour ranges');
+      await finalize({ inputs, raw: mux === 'raw', codec: enc.codec, fps, audio: o.audio && resolve(o.audio), out: part, duration: frames / fps, tmp, signal: o.signal, fullRange });
+      return { mux, encodeMs, stats, fullRange };
     };
 
     mkdirSync(dirname(out), { recursive: true });
@@ -134,7 +136,7 @@ export async function renderVideo(o) {
     const v = await probeVideo(out), wantDur = frames / fps;
     const muxLabel = `${res.mux === 'raw' ? 'raw bitstream' : 'Mediabunny in the page'}, then ffmpeg -c copy${ranges.length > 1 ? ` (concat of ${ranges.length} parts)` : ''}${o.audio ? ' with audio' : ''}`;
     const summary = { out, frames: v.frames, expectedFrames: frames, pageFrames, duration: v.duration, width, height, fps, gpu: info.gpu.renderer, encoder: label(enc), codec: enc.codec, hw: enc.hw,
-      rate: rate(enc), mux: muxLabel, workers: ranges.length, encodeSeconds: res.encodeMs / 1000, totalSeconds: (Date.now() - started) / 1000, size: v.size,
+      rate: rate(enc), mux: muxLabel, fullRange: res.fullRange, workers: ranges.length, encodeSeconds: res.encodeMs / 1000, totalSeconds: (Date.now() - started) / 1000, size: v.size,
       color: { range: v.color_range, space: v.color_space, transfer: v.color_transfer, primaries: v.color_primaries } };
     log(`Mux: ${muxLabel}`);
     log(`Colour tags: ${v.color_space || 'none'} / ${v.color_range || 'none'} (primaries ${v.color_primaries || 'none'}, transfer ${v.color_transfer || 'none'})`);

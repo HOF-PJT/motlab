@@ -82,7 +82,8 @@ export async function renderProject({ dir, out, scale, log = console.log, signal
     // Written beside the output first and renamed when complete, so a stopped or failed render leaves no half file.
     signal?.throwIfAborted();
     mkdirSync(dirname(out), { recursive: true });
-    await finalize({ inputs: parts.map(s => s.out), codec: parts[0].codec, fps: p.fps, audio, out: partial, duration, tmp, signal });
+    if (parts.some(s => s.fullRange !== parts[0].fullRange)) throw new Error('the scenes were encoded with different colour ranges');
+    await finalize({ inputs: parts.map(s => s.out), codec: parts[0].codec, fps: p.fps, audio, out: partial, duration, tmp, signal, fullRange: parts[0].fullRange });
     rmSync(out, { force: true }); renameSync(partial, out);
     log(`\nSAVED ${out} (${scenes.length} scenes${parts.length > scenes.length ? `, ${parts.length - scenes.length} transitions` : ''}, ${duration.toFixed(3)} s${audio ? `, ${p.audio.length} audio files` : ''})`);
   } finally { rmSync(partial, { force: true }); rmSync(tmp, { recursive: true, force: true }); }

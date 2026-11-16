@@ -6,6 +6,9 @@
   if (window.__motlab) return;
 
   const BT709 = { primaries: 'bt709', transfer: 'bt709', matrix: 'bt709', fullRange: false };
+  // Chrome turns the canvas into limited range YUV when it draws on a GPU, but into full range when it draws in
+  // software (SwiftShader, or a machine without a GPU), and the encoder's decoderConfig says which.
+  const fullRange = meta => meta?.decoderConfig?.colorSpace?.fullRange === true;
   const emit = (type, data = {}) => { try { window.__motlabEmit(JSON.stringify({ type, ...data })); } catch {} };
   const post = async (url, body) => { const r = await fetch(url, { method: 'POST', body }); if (!r.ok) throw new Error(`upload failed (${r.status})`); };
   const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -68,10 +71,10 @@
     output.addVideoTrack(source, { frameRate: o.fps });
     await output.start();
     return {
-      // Encoders tag colour inconsistently (hardware H.264 not at all) although the pixels are BT.709 limited range,
-      // so the container tag is set here for every encoder. ffmpeg later writes the same into the bitstream.
+      // Encoders tag colour inconsistently in the bitstream (hardware H.264 not at all), so the container tag is set
+      // here: BT.709 with the range the encoder reports. ffmpeg later writes the same into the bitstream.
       add: (chunk, meta) => source.add(MB.EncodedPacket.fromEncodedChunk(chunk),
-        meta && meta.decoderConfig ? { ...meta, decoderConfig: { ...meta.decoderConfig, colorSpace: BT709 } } : meta),
+        meta && meta.decoderConfig ? { ...meta, decoderConfig: { ...meta.decoderConfig, colorSpace: { ...BT709, fullRange: fullRange(meta) } } } : meta),
       finish: () => output.finalize(),
     };
   }
@@ -83,10 +86,11 @@
     if (!(await VideoEncoder.isConfigSupported(cfg)).supported) throw new Error(`encoder config not supported: ${cfg.codec} ${cfg.hardwareAcceleration} ${cv.width}x${cv.height}`);
     const sink = await openSink(o);
 
-    let chain = Promise.resolve(), queued = 0, failure = null, bytes = 0;
+    let chain = Promise.resolve(), queued = 0, failure = null, bytes = 0, full = false;
     const enc = new VideoEncoder({
       output(chunk, meta) {
         bytes += chunk.byteLength; queued++;
+        if (meta?.decoderConfig) full = fullRange(meta);
         chain = chain.then(() => failure || sink.add(chunk, meta)).then(() => { queued--; }, e => { failure ??= e; queued--; });
       },
       error(e) { failure ??= e; },
@@ -111,7 +115,7 @@
     await chain;
     if (failure) throw new Error(`encode failed: ${failure.message || failure}`);
     await sink.finish();
-    return { frames, bytes, ms: performance.now() - t0, renderMs };
+    return { frames, bytes, ms: performance.now() - t0, renderMs, fullRange: full };
   }
 
   // ---- encoder probe: how fast is one encoder config at this size, with drawing kept cheap? ----

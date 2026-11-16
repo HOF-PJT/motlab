@@ -13,11 +13,12 @@ export function run(cmd, args, signal) {   // signal: an AbortSignal that kills 
   });
 }
 
-// BT.709, limited range, written into the bitstream itself (VUI) so the tag survives any later remux.
-const VUI = 'colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=0';
+// BT.709 with the range the encoder used (limited when Chrome drew on a GPU, full when it drew in software), written
+// into the bitstream itself (VUI) so the tag survives any later remux.
+const vui = full => `colour_primaries=1:transfer_characteristics=1:matrix_coefficients=1:video_full_range_flag=${full ? 1 : 0}`;
 
 // inputs: MP4 segments (one or more) or one raw Annex B file. Output: a fast-start MP4, optionally with audio.
-export async function finalize({ inputs, raw, codec, fps, audio, out, duration, tmp, signal }) {
+export async function finalize({ inputs, raw, codec, fps, audio, out, duration, tmp, signal, fullRange = false }) {
   const args = ['-y', '-loglevel', 'error'];
   if (raw) args.push('-f', codec === 'hevc' ? 'hevc' : 'h264', '-framerate', String(fps), '-i', inputs[0]);
   else if (inputs.length === 1) args.push('-i', inputs[0]);
@@ -28,8 +29,8 @@ export async function finalize({ inputs, raw, codec, fps, audio, out, duration, 
   }
   if (audio) args.push('-i', audio, '-map', '0:v:0', '-map', '1:a:0', '-c:a', 'aac', '-b:a', '320k', '-t', duration.toFixed(6));
   else args.push('-map', '0:v:0');
-  args.push('-c:v', 'copy', '-bsf:v', `${codec === 'hevc' ? 'hevc' : 'h264'}_metadata=${VUI}`,
-    '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709', '-color_range', 'tv',
+  args.push('-c:v', 'copy', '-bsf:v', `${codec === 'hevc' ? 'hevc' : 'h264'}_metadata=${vui(fullRange)}`,
+    '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709', '-color_range', fullRange ? 'pc' : 'tv',
     ...(codec === 'hevc' ? ['-tag:v', 'hvc1'] : []), '-movflags', '+faststart', '-f', 'mp4', out);
   await run('ffmpeg', args, signal);
 }
