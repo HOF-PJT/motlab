@@ -209,6 +209,16 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md) first. Agents working in this repository
 npm test
 ```
 
+## Star history
+
+<a href="https://www.star-history.com/?repos=staryone%2Fmotlab&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=staryone/motlab&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=staryone/motlab&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=staryone/motlab&type=date&legend=top-left" />
+ </picture>
+</a>
+
 ## License
 
 [MIT](LICENSE). The scene transitions come from gl-transitions (MIT); [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) has their licence and the libraries motlab installs or loads. Fonts, footage, music and other files you bring into a project keep their own licences.

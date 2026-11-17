@@ -2,6 +2,13 @@
 
 Changes are listed by release, newest first. The sections dated before 0.1.0 record what was built on the way to the first release.
 
+## Unreleased
+
+### Changed
+
+- The copyright line in `LICENSE` names Stanyslaus Hary (motlab) instead of "motlab contributors". The licence is still MIT.
+- The repository has a sponsor button (`.github/FUNDING.yml`, Ko-fi and Saweria), and the README has a star history chart above the licence.
+
 ## 0.2.2 (2026-11-17)
 
 ### Fixed
